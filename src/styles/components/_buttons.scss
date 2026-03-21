@@ -1,0 +1,122 @@
+@use '../mixins/buttons' as *;
+
+html[data-csui-enabled].csui-theme {
+    // .btn {
+    //     // Kill old funky styles
+    //     background: none;
+    //     background-color: var(--chatt-color-primary);
+    //     background-image: none;
+    //     clip-path: none;
+
+    //     // Layout
+    //     height: auto;
+    //     display: inline-flex;
+    //     align-items: center;
+    //     justify-content: center;
+    //     gap: 0.35rem;
+    //     padding: 0.75rem 1.5rem;
+    //     margin: 0;
+
+    //     // Typography - Chattanooga.gov-like
+    //     font-family: var(--chatt-font-sans);
+    //     font-size: 0.9375rem; // ~15px
+    //     font-weight: 600;
+    //     line-height: 1.2;
+    //     text-transform: none;
+    //     letter-spacing: 0.01em;
+
+    //     // Border & radius - pill CTA style
+    //     border-radius: 999px;
+    //     border: 2px solid transparent;
+
+    //     // Colors
+    //     color: white;
+
+    //     // Depth
+    //     box-shadow: var(--chatt-shadow-soft);
+
+    //     // Behavior
+    //     cursor: pointer;
+    //     text-decoration: none;
+    //     white-space: nowrap;
+
+    //     // Motion
+    //     transition:
+    //         opacity var(--chatt-transition-fast),
+    //         background-color var(--chatt-transition-fast),
+    //         border-color var(--chatt-transition-fast),
+    //         box-shadow var(--chatt-transition-fast),
+    //         transform var(--chatt-transition-fast),
+    //         color var(--chatt-transition-fast);
+    // }
+
+    // .btn::before,
+    // .btn::after {
+    //     display: none;
+    // }
+
+    // // Primary
+    // .btn.btn-primary {
+    //     background: none;
+    //     background-color: var(--chatt-color-primary);
+    //     background-image: none;
+    //     border-color: var(--chatt-color-primary);
+    //     color: white;
+    // }
+
+    // // Secondary / neutral
+    // .btn.btn-default,
+    // .btn.btn-secondary {
+    //     background: none;
+    //     background-color: white;
+    //     background-image: none;
+    //     color: var(--chatt-color-primary-dark);
+    //     border-color: var(--chatt-color-border-subtle);
+    //     box-shadow: none;
+    // }
+
+    // // Danger
+    // .btn.btn-danger {
+    //     background: none;
+    //     background-color: var(--chatt-color-danger);
+    //     background-image: none;
+    //     border-color: var(--chatt-color-danger);
+    // }
+
+    // // Hover / focus states
+    // .btn:hover:not(:disabled):not(.disabled),
+    // .btn:focus-visible:not(:disabled):not(.disabled) {
+    //     background-color: var(--chatt-color-primary-dark);
+    //     border-color: var(--chatt-color-primary-dark);
+    //     box-shadow: 0 4px 10px rgba(15, 23, 42, 0.18);
+    //     text-decoration: none;
+    // }
+
+    // .btn.btn-default:hover:not(:disabled):not(.disabled),
+    // .btn.btn-secondary:hover:not(:disabled):not(.disabled) {
+    //     background-color: var(--chatt-color-primary-soft);
+    //     border-color: var(--chatt-color-primary);
+    //     color: var(--chatt-color-primary-dark);
+    //     box-shadow: var(--chatt-shadow-soft);
+    // }
+
+    // // Accessible focus outline
+    // .btn:focus-visible {
+    //     outline: 3px solid var(--chatt-color-accent);
+    //     outline-offset: 2px;
+    // }
+
+    // // Disabled state
+    // .btn:disabled,
+    // .btn.disabled {
+    //     opacity: 0.6;
+    //     cursor: not-allowed;
+    //     box-shadow: none;
+    // }
+
+    // // Full-width helpers
+    // .btn-block,
+    // .btn.btn-block {
+    //     width: 100%;
+    // }
+}

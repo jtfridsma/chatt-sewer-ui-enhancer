@@ -1,0 +1,9 @@
+// Simple flexbox mixin with defaults and override support
+@mixin flex($direction: row, $gap: 1rem) {
+    display: flex;
+    flex-direction: $direction;
+    gap: $gap;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+}

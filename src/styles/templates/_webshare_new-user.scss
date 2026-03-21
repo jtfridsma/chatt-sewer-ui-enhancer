@@ -1,0 +1,123 @@
+@use 'sass:color';
+@use '../utilities/tokens';
+@use '../mixins/buttons';
+
+// WebShare new user page
+html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-new-user {
+    #loginarea {
+        .top_text_area {
+            display: none;
+        }
+
+        // table table table tr {
+        //     display: flex;
+        //     flex-direction: column;
+        //     width: 100% !important;
+        //     gap: 0.25rem;
+        // }
+
+        // table table table tr + tr {
+        //     margin-top: 1rem !important;
+        // }
+
+        label {
+            color: white;
+            font-weight: 600;
+        }
+
+        input:not([type='submit']) {
+            width: 100% !important;
+        }
+
+        div:has(> select) {
+            width: 100% !important;
+            padding: 0 !important;
+            overflow: visible !important;
+
+            select {
+                width: 100% !important;
+            }
+        }
+    }
+
+    td[align='left'],
+    td[align='center'] {
+        padding: 0 !important;
+    }
+
+    table table table {
+        tr:has(span[title*='required']) {
+            display: grid;
+            grid-template-columns: 130px 1fr;
+            gap: 1rem;
+            align-items: center;
+
+            margin-bottom: 1.25rem;
+
+            // + tr:has(span[title*='required']) {
+            //     margin-top: 1.25rem;
+            // }
+
+            td:has(span[title*='required']) {
+                position: relative;
+
+                span[title*='required'] {
+                    position: absolute;
+                    bottom: 2px;
+                    right: 2px;
+                    margin-top: 0 !important;
+                    width: fit-content !important;
+                    font-size: 0.625rem;
+                }
+            }
+        }
+    }
+
+    // Error labels
+    span[title*='required'],
+    #Main_CreateUserWizard1_CreateUserStepContainer_PasswordCompare,
+    #Main_CreateUserWizard1_CreateUserStepContainer_EmailValid,
+    #Main_CreateUserWizard1_CreateUserStepContainer_dupEmail,
+    #Main_CreateUserWizard1_CreateUserStepContainer_UserNameValid {
+        font-size: 0.875rem;
+        margin-top: 1rem !important;
+        margin-bottom: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding: 0.25rem 0.5rem;
+        text-align: center;
+        height: auto;
+        width: 100% !important;
+        background-color: color.adjust(tokens.$chatt-color-danger, $lightness: 50%);
+        border: 1px solid tokens.$chatt-color-danger;
+        color: tokens.$chatt-color-danger !important;
+        border-radius: var(--chatt-radius-md);
+
+        &:empty {
+            display: none;
+        }
+
+        &[style*='display: inline;'] {
+            display: block !important;
+        }
+    }
+
+    // Button containers
+    td[align='right']:not(:has(input[type='submit'])) {
+        display: none;
+    }
+
+    td[align='right']:has(> input[type='submit']) {
+        // padding: 2rem 0 0;
+        display: block;
+        margin-top: 2rem;
+        text-align: center;
+    }
+
+    // Buttons
+    #Main_CreateUserWizard1___CustomNav0_SubmitButton {
+        @include buttons.button(gold);
+
+        margin-right: 0 !important;
+    }
+}

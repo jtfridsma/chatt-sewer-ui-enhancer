@@ -1,0 +1,156 @@
+// Form fields styled to resemble https://chattanooga.gov/feedback
+// (see .form-item there for spacing + inputs)
+
+html[data-csui-enabled].csui-theme {
+    // Wrapper for each field
+    .form-item {
+        margin-bottom: 1.25rem;
+
+        label,
+        .form-label {
+            display: block;
+            margin-bottom: 0.35rem;
+
+            font-family: var(--chatt-font-sans);
+            font-size: 0.95rem;
+            font-weight: 600;
+            line-height: 1.4;
+            color: var(--chatt-color-text);
+        }
+
+        // Required marker, if present
+        .form-required,
+        .required-indicator {
+            color: var(--chatt-color-danger);
+            margin-left: 0.15rem;
+            font-weight: 700;
+        }
+
+        // Help / description text
+        .form-description,
+        .help-text,
+        small {
+            display: block;
+            margin-top: 0.25rem;
+
+            font-size: 0.875rem;
+            line-height: 1.5;
+            color: var(--chatt-color-text-muted);
+        }
+    }
+
+    // Base styles for inputs, selects, textareas
+    .form-item input[type='text'],
+    .form-item input[type='email'],
+    .form-item input[type='tel'],
+    .form-item input[type='url'],
+    .form-item input[type='number'],
+    .form-item input[type='password'],
+    .form-item input[type='search'],
+    .form-item select,
+    .form-item textarea,
+    // in case some fields are not wrapped in .form-item
+    form input[type='text'],
+    form input[type='email'],
+    form input[type='tel'],
+    form input[type='url'],
+    form input[type='number'],
+    form input[type='password'],
+    form input[type='search'],
+    form select,
+    form textarea {
+        display: block;
+        width: 100%;
+
+        font-family: var(--chatt-font-sans);
+        font-size: 0.95rem;
+        line-height: 1.4;
+        color: var(--chatt-color-text);
+
+        padding: 0.7rem 0.8rem;
+        border-radius: 0.5rem;
+        border: 1px solid var(--chatt-color-border-subtle);
+        background-color: white;
+
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        transition:
+            border-color var(--chatt-transition-fast),
+            box-shadow var(--chatt-transition-fast),
+            background-color var(--chatt-transition-fast);
+    }
+
+    // Placeholder text
+    .form-item input::placeholder,
+    .form-item textarea::placeholder,
+    form input::placeholder,
+    form textarea::placeholder {
+        color: var(--chatt-color-text-muted);
+        opacity: 1;
+    }
+
+    // Hover state
+    .form-item input[type='text']:hover,
+    .form-item input[type='email']:hover,
+    .form-item input[type='tel']:hover,
+    .form-item input[type='url']:hover,
+    .form-item input[type='number']:hover,
+    .form-item input[type='password']:hover,
+    .form-item input[type='search']:hover,
+    .form-item select:hover,
+    .form-item textarea:hover,
+    form input[type='text']:hover,
+    form input[type='email']:hover,
+    form input[type='tel']:hover,
+    form input[type='url']:hover,
+    form input[type='number']:hover,
+    form input[type='password']:hover,
+    form input[type='search']:hover,
+    form select:hover,
+    form textarea:hover {
+        border-color: var(--chatt-color-primary-soft);
+        box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+    }
+
+    // Focus state (accessible)
+    .form-item input[type='text']:focus-visible,
+    .form-item input[type='email']:focus-visible,
+    .form-item input[type='tel']:focus-visible,
+    .form-item input[type='url']:focus-visible,
+    .form-item input[type='number']:focus-visible,
+    .form-item input[type='password']:focus-visible,
+    .form-item input[type='search']:focus-visible,
+    .form-item select:focus-visible,
+    .form-item textarea:focus-visible,
+    form input[type='text']:focus-visible,
+    form input[type='email']:focus-visible,
+    form input[type='tel']:focus-visible,
+    form input[type='url']:focus-visible,
+    form input[type='number']:focus-visible,
+    form input[type='password']:focus-visible,
+    form input[type='search']:focus-visible,
+    form select:focus-visible,
+    form textarea:focus-visible {
+        outline: 2px solid var(--csui-input-focus-outline-color, var(--chatt-color-primary));
+        outline-offset: 2px;
+        // border-color: var(--chatt-color-primary);
+        // box-shadow: 0 0 0 1px var(--chatt-color-primary);
+    }
+
+    // Error state (assuming a .has-error/.is-invalid wrapper or .error class)
+    .form-item.has-error input,
+    .form-item.has-error select,
+    .form-item.has-error textarea,
+    .form-item input.error,
+    .form-item select.error,
+    .form-item textarea.error {
+        border-color: var(--chatt-color-danger);
+        box-shadow: 0 0 0 1px rgba(185, 28, 28, 0.4);
+    }
+
+    .form-item .error-message,
+    .form-item .validation-message {
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+        color: var(--chatt-color-danger);
+    }
+}

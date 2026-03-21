@@ -1,0 +1,170 @@
+@use 'sass:color';
+@use '../utilities/tokens';
+@use '../mixins/buttons';
+
+// WebShare forgot username page
+html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-forgot-username {
+    .label {
+        color: white;
+        font-weight: 600;
+        margin-bottom: 0 !important;
+        padding-left: 0;
+        text-align: left;
+
+        tr {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        td {
+            width: 100% !important;
+            text-align: left;
+            padding: 0 !important;
+        }
+
+        // // Bring back these line breaks
+        // br:not(:first-of-type) {
+        //     display: inline-block;
+        // }
+
+        // // Apply margin between text and field
+        // .field {
+        //     margin-top: 0.25rem !important;
+        // }
+    }
+
+    // Email field
+    #Main_ForgotUserNameTable {
+        // Hide unnecessary table rows
+        table tr:first-of-type,
+        table tr:last-of-type {
+            display: none;
+        }
+
+        // "Enter your email address to receive user name." label
+        table tr:nth-of-type(2) td {
+            // TODO: abstract out this style to a mixin or other reusable place
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        #Main_Email {
+            width: 100% !important;
+        }
+    }
+
+    // "OR" container
+    #Main_loginContent {
+        padding: 0 !important;
+        margin: 2rem 0 !important;
+        position: relative;
+        text-align: center;
+
+        &::before,
+        &::after {
+            position: absolute;
+        }
+
+        &::before {
+            content: '';
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            transform: translateY(-50%);
+            background-color: var(--chatt-color-border-subtle);
+            opacity: 0.25;
+        }
+
+        &::after {
+            content: 'OR';
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: var(--chatt-color-primary-dark);
+            color: white;
+            padding: 1rem;
+        }
+
+        // display: flex;
+        // align-items: center;
+        // gap: 1rem;
+
+        // &::before,
+        // &::after {
+        //     content: '';
+        //     flex: 1;
+        //     height: 1px;
+        //     background-color: var(--chatt-color-border-subtle);
+        //     opacity: 0.25;
+        // }
+    }
+
+    // Username field
+    #Main_PasswordRecovery1 {
+        margin-bottom: 1rem !important;
+
+        // Hide unnecessary table rows
+        table table tr:nth-of-type(2) {
+            display: none;
+        }
+
+        // "Enter your User Name to change your password." label
+        table table tr:first-of-type td {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+    }
+
+    // #loginarea {
+    //     & > div[align='center'] {
+    //         text-align: left;
+
+    //         & > div[align='center'] {
+    //             display: none;
+    //         }
+    //     }
+    // }
+
+    #Main_EmailRequired,
+    #Main_EmailValid,
+    #Main_PasswordRecovery1_UserNameContainerID_UserNameRequired {
+        display: none;
+    }
+
+    // Error message
+    .error_label {
+        font-size: 0.875rem;
+        margin-top: 1rem !important;
+        margin-bottom: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding: 0.25rem 0.5rem;
+        text-align: center;
+        height: auto;
+        width: 100% !important;
+        background-color: color.adjust(tokens.$chatt-color-danger, $lightness: 50%);
+        border: 1px solid tokens.$chatt-color-danger;
+        color: tokens.$chatt-color-danger;
+        border-radius: var(--chatt-radius-md);
+
+        &:empty {
+            display: none;
+        }
+    }
+
+    // Button containers
+    td[align='center']:has(input[type='submit']) {
+        display: block;
+        margin-top: 2rem;
+        text-align: center;
+    }
+
+    // Buttons
+    #Main_PasswordRecovery1_UserNameContainerID_Button1 {
+        @include buttons.button(gold);
+    }
+}

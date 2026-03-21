@@ -1,0 +1,396 @@
+// html.csui-theme {
+//     .csui-control { /* fixed positioning container */ }
+//     .csui-control__launcher { /* circle icon button */ }
+//     .csui-control[data-csui-open] .csui-control__panel { /* show */ }
+//     .csui-control__panel { /* hidden by default */ }
+//     .csui-control__badge { /* hidden by default */ }
+//     .csui-control__badge[data-visible] { /* visible */ }
+//   }
+
+// src/styles/components/_csui-control.scss
+//
+// Floating CSUI control: circular launcher + popover panel.
+// Requires markup injected by src/scripts/toggle.js.
+//
+// Assumes CSS variables exist:
+// --chatt-font-sans
+// --chatt-color-primary
+// --chatt-color-primary-dark
+// --chatt-color-accent
+// --chatt-color-surface
+// --chatt-color-border-subtle
+// --chatt-color-text
+// --chatt-color-text-muted
+// --chatt-radius-md
+// --chatt-radius-lg
+// --chatt-shadow-soft
+// --chatt-transition-fast
+//
+
+// src/styles/components/_csui-control.scss
+
+html.csui-theme {
+    .csui-control,
+    .csui-control * {
+        box-sizing: border-box;
+    }
+
+    .csui-control {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        z-index: 1000;
+        pointer-events: auto;
+        user-select: none;
+        display: block;
+        //         width: 44px;
+        //         height: 44px;
+        //         One small JS adjustment you’ll probably want
+
+        // Since we made the launcher position: absolute inside .csui-control, make sure .csui-control has a positioning context. In the SCSS above it’s already position: fixed;, which is fine. But you may want to ensure the control root has a predictable footprint.
+
+        // If you notice any weirdness, the simplest is to ensure .csui-control has a minimal size:
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                transition: none !important;
+                animation: none !important;
+            }
+        }
+    }
+
+    // --------------------
+    // Launcher (collapsed)
+    // --------------------
+    .csui-control__launcher {
+        appearance: none;
+        -webkit-appearance: none;
+        border: 0;
+        padding: 0;
+        margin: 0;
+
+        width: 44px;
+        height: 44px;
+        border-radius: 999px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        background-color: var(--chatt-color-primary);
+        color: #ffffff;
+
+        box-shadow: var(--chatt-shadow-soft);
+        cursor: pointer;
+
+        position: absolute;
+        top: 0;
+        right: 0;
+        z-index: 3; // stays above panel
+
+        transition:
+            transform var(--chatt-transition-fast),
+            box-shadow var(--chatt-transition-fast),
+            background-color var(--chatt-transition-fast);
+
+        background-image: none;
+        text-decoration: none;
+        line-height: 1;
+
+        &:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 22px rgba(15, 23, 42, 0.18);
+        }
+
+        &:active {
+            transform: translateY(0);
+            box-shadow: var(--chatt-shadow-soft);
+        }
+
+        &:focus-visible {
+            outline: 3px solid var(--chatt-color-accent);
+            outline-offset: 3px;
+        }
+
+        // --- Toilet handle indicator (CSS-only) ---
+        // A tiny “knob” + “arm” that flips down when disabled.
+        // Knob
+        &::before {
+            content: '';
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 999px;
+            background: white;
+            // place slightly left so icon/handle reads well
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        // Arm
+        &::after {
+            content: '';
+            position: absolute;
+            width: 14px;
+            height: 2px;
+            border-radius: 2px;
+            background: white;
+
+            // anchored near knob
+            right: 17px;
+            top: calc(50% - 1px);
+
+            transform-origin: center right;
+            transform: rotate(0deg); // enabled = handle up
+            transition: transform var(--chatt-transition-fast);
+        }
+    }
+
+    // Handle down when disabled (no data-csui-enabled)
+    // NOTE: this file is nested under `html.csui-theme { ... }`, so use `&` (or @at-root)
+    // to avoid generating an impossible selector like `html.csui-theme html.csui-theme:not(...) ...`.
+    &:not([data-csui-enabled]) .csui-control__launcher::after {
+        transform: rotate(-30deg);
+    }
+
+    // Optional: if you want the launcher bg to change when disabled
+    &:not([data-csui-enabled]) .csui-control__launcher {
+        background-color: var(--chatt-color-text-muted);
+    }
+
+    // --------------------
+    // Error badge (caution)
+    // --------------------
+    .csui-control__badge {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+
+        width: 20px;
+        height: 20px;
+        border-radius: 999px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        background-color: var(--chatt-color-accent);
+        color: var(--chatt-color-primary-dark);
+
+        border: 2px solid var(--chatt-color-surface);
+        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.18);
+
+        opacity: 0;
+        transform: scale(0.9);
+        pointer-events: none;
+
+        transition:
+            opacity var(--chatt-transition-fast),
+            transform var(--chatt-transition-fast);
+
+        svg {
+            display: block;
+            fill: currentColor;
+        }
+    }
+
+    .csui-control__badge[data-visible='true'] {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    // -----------------------------------------
+    // Panel (popover) - floats under/left of button
+    // -----------------------------------------
+    .csui-control__panel {
+        position: absolute;
+
+        // Panel is offset so the button appears slightly above/right of it
+        top: 1rem;
+        right: 1rem;
+
+        width: 320px;
+        max-width: calc(100vw - 2rem);
+
+        background-color: var(--chatt-color-surface);
+        border: 1px solid var(--chatt-color-border-subtle);
+        border-radius: var(--chatt-radius-lg);
+        box-shadow: 0 14px 34px rgba(15, 23, 42, 0.22);
+
+        padding: 0.9rem 1rem;
+
+        font-family: var(--chatt-font-sans);
+        color: var(--chatt-color-text);
+        line-height: 1.35;
+        letter-spacing: normal;
+
+        min-width: 0;
+        overflow-wrap: anywhere;
+
+        opacity: 0;
+        transform: translate(2px, -2px) scale(0.98);
+        transform-origin: top right;
+        pointer-events: none;
+
+        transition:
+            opacity var(--chatt-transition-fast),
+            transform var(--chatt-transition-fast);
+    }
+
+    .csui-control[data-csui-open='true'] .csui-control__panel {
+        opacity: 1;
+        transform: translate(0, 0) scale(1);
+        pointer-events: auto;
+    }
+
+    .csui-control[data-csui-open='true'] .csui-control__launcher {
+        background-color: var(--chatt-color-primary-dark);
+    }
+
+    // --------------------
+    // Panel content
+    // --------------------
+    .csui-control__header {
+        display: block;
+        margin-bottom: 0.75rem;
+        min-width: 0;
+
+        // Only the header gets “safe space” for the overlapping launcher
+        padding-top: 0.1rem;
+        padding-right: calc(
+            44px - 2rem
+        ); // 2rem is the padding of the panel plus the right position of the panel relative to the launcher
+    }
+
+    .csui-control__title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--chatt-color-primary-dark);
+        min-width: 0;
+    }
+
+    .csui-control__row {
+        margin: 0.25rem 0 0.75rem;
+    }
+
+    .csui-control__divider {
+        height: 1px;
+        background-color: var(--chatt-color-border-subtle);
+        margin: 0.75rem 0;
+    }
+
+    // --------------------
+    // Toggle row (label + switch)
+    // --------------------
+    .csui-control__toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        width: 100%;
+        cursor: pointer;
+        user-select: none;
+        min-width: 0;
+    }
+
+    .csui-control__toggle-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--chatt-color-text);
+        min-width: 0;
+    }
+
+    .csui-control__toggle input[type='checkbox'] {
+        position: absolute;
+        opacity: 0;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+    }
+
+    .csui-control__toggle-ui {
+        flex: 0 0 auto;
+        width: 44px;
+        height: 24px;
+        border-radius: 999px;
+        background-color: var(--chatt-color-text-muted);
+        box-shadow: var(--chatt-shadow-soft);
+        position: relative;
+
+        transition:
+            background-color var(--chatt-transition-fast),
+            box-shadow var(--chatt-transition-fast);
+
+        &::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            background-color: var(--chatt-color-surface);
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.18);
+
+            transition: transform var(--chatt-transition-fast);
+            will-change: transform;
+        }
+    }
+
+    .csui-control__toggle input[type='checkbox']:checked + .csui-control__toggle-ui {
+        background-color: var(--chatt-color-primary);
+
+        &::after {
+            transform: translateX(20px);
+        }
+    }
+
+    .csui-control__toggle input[type='checkbox']:focus-visible + .csui-control__toggle-ui {
+        outline: 3px solid var(--chatt-color-accent);
+        outline-offset: 2px;
+    }
+
+    // Links
+    .csui-control__links {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        min-width: 0;
+    }
+
+    .csui-control__link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        padding: 0.45rem 0.5rem;
+        border-radius: var(--chatt-radius-md);
+
+        color: var(--chatt-color-primary-dark);
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 600;
+
+        transition:
+            background-color var(--chatt-transition-fast),
+            transform var(--chatt-transition-fast);
+
+        svg {
+            fill: currentColor;
+            flex: 0 0 auto;
+        }
+
+        &:hover {
+            background-color: rgba(15, 76, 109, 0.08);
+            transform: translateX(1px);
+        }
+
+        &:focus-visible {
+            outline: 3px solid var(--chatt-color-accent);
+            outline-offset: 2px;
+        }
+    }
+}

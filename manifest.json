@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "Chattanooga Sewer UI Enhancer",
+  "version": "0.1.0",
+  "description": "Restyles the Chattanooga sewer payments portal and related dashboard to match the main Chattanooga.gov UI more closely.",
+  "icons": {
+    "16": "public/icons/icon-16.png",
+    "32": "public/icons/icon-32.png",
+    "48": "public/icons/icon-48.png",
+    "128": "public/icons/icon-128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.sewerpayments.com/chattanooga*",
+        "https://share.dwcorp.com/WebShare/*",
+        "https://share.dwcorp.com/webshare/*"
+      ],
+      "js": ["public/main.js"],
+      "css": ["public/main.css"],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["public/icons/*.png"],
+      "matches": ["https://www.sewerpayments.com/*", "https://share.dwcorp.com/*"]
+    }
+  ]
+}

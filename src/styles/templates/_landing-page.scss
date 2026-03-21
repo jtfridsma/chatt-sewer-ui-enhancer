@@ -1,0 +1,290 @@
+@use '../mixins/buttons';
+
+// SewerPayments standalone page layout helper
+html[data-csui-enabled].csui-theme.csui-landing-page {
+    body {
+        // max-width: 960px;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1.5rem;
+
+        @media (max-width: 35rem) {
+            padding: 1.5rem 0.75rem;
+        }
+    }
+
+    p {
+        font-size: 1.125rem;
+        text-align: left !important;
+        line-height: 1.5;
+        letter-spacing: normal;
+    }
+
+    em {
+        font-style: normal;
+    }
+
+    a:not(.button):not(.csui-control__link) {
+        text-decoration: underline;
+        color: var(--chatt-color-primary);
+
+        &:hover {
+            color: var(--chatt-color-primary-dark);
+        }
+
+        &[href^='tel:'] {
+            white-space: nowrap;
+        }
+    }
+
+    // ul {
+    //     font-size: 0.875rem;
+
+    //     li p {
+    //         font-size: 0.875rem;
+    //     }
+    // }
+
+    a strong {
+        font-weight: normal;
+    }
+
+    hr {
+        margin: 3rem 0;
+    }
+}
+
+// src/styles/templates/_csui-sewerpayments.scss
+//
+// Styles specifically for https://www.sewerpayments.com/chattanooga
+// Scoped by .csui-landing-page (set on <html>) to avoid leakage.
+
+html.csui-theme.csui-landing-page[data-csui-enabled] {
+    /* Utility */
+    .csui-hidden {
+        display: none !important;
+    }
+
+    .sqs-row {
+        margin: 0 !important;
+    }
+
+    .sqs-block {
+        padding: 0 !important;
+    }
+
+    #canvas {
+        padding: 0;
+    }
+
+    // Hide random link wrapper
+    #headerWrapper {
+        display: none;
+    }
+
+    #mobileNav {
+        display: none;
+    }
+
+    #page {
+        margin-top: 0;
+    }
+
+    // Chattanooga logo container: target only when the img data-src ends with /Cha.png
+    .sqs-image-shape-container-element.has-aspect-ratio {
+        padding-bottom: 150px !important;
+        margin-bottom: 1.5rem;
+
+        img {
+            object-fit: contain !important;
+        }
+    }
+
+    /* Service issues banner at the top of the page
+       Apply same styling to the original CMS block so no JS injection is needed. */
+    // #csui-service-banner,
+    #block-c35f931c81b99d76a401 > div {
+        h2 {
+            background-color: var(--chatt-color-primary-soft);
+            color: var(--chatt-color-primary-dark);
+            border-radius: var(--chatt-radius-lg);
+            border: 1px solid var(--chatt-color-border-subtle);
+            padding: 0.75rem 1rem;
+            // margin: 1rem auto 1.5rem;
+            margin: 0 auto;
+            text-align: center;
+            max-width: 960px;
+            font-family: var(--chatt-font-sans);
+            // font-size: 0.95rem;
+            font-size: 0.875rem;
+            line-height: 1.25;
+
+            strong {
+                font-weight: 600;
+            }
+        }
+    }
+
+    /* Notice paragraph styling (from CMS copy that starts with NOTICE TO CUSTOMERS:) */
+    .csui-notice {
+        font-size: 0.85rem;
+        line-height: 1.4;
+        padding-top: 2rem;
+        border-top: 1px solid var(--chatt-color-border-subtle);
+        margin-top: 2rem;
+        color: var(--chatt-color-text-muted);
+    }
+
+    /* Layout wrapper for main text + sidebar */
+    .csui-layout {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        align-items: start;
+        gap: 2rem;
+        // align-items: flex-start;
+        // max-width: 960px;
+        // margin-inline: auto;
+    }
+
+    // .csui-layout-main {
+    // flex: 1 1 60%;
+    // min-width: 0; // avoid overflow
+    // }
+
+    .csui-sidebar {
+        //     flex: 0 0 260px;
+        //     max-width: 100%;
+        font-family: var(--chatt-font-sans);
+        font-size: 0.95rem;
+        line-height: 1.5;
+        background-color: #ffffff;
+        border-radius: var(--chatt-radius-lg);
+        border: 1px solid var(--chatt-color-border-subtle);
+        box-shadow: var(--chatt-shadow-soft);
+        padding: 1rem 1.25rem;
+        overflow: hidden;
+
+        br {
+            display: none;
+        }
+
+        // Quirks
+        span.csui-notice {
+            display: block;
+
+            > strong > em {
+                font-weight: 400;
+            }
+
+            br {
+                display: none;
+            }
+
+            &::after {
+                content: '.';
+                display: inline;
+            }
+        }
+    }
+
+    .csui-sidebar__title {
+        font-weight: 600;
+        font-size: 1.25rem;
+        line-height: 1.25;
+        color: white;
+        margin: -1rem -1.25rem 0;
+        padding: 1rem 1.25rem;
+        background-color: var(--chatt-color-primary-dark);
+        font-family: var(--chatt-font-heading);
+
+        & + p {
+            font-size: 0.875rem;
+            margin: 0 -1.25rem 2rem;
+            padding: 1rem 1.25rem;
+            background-color: var(--chatt-color-primary-soft);
+
+            strong em {
+                font-weight: 500;
+            }
+        }
+    }
+
+    .csui-sidebar p:last-child {
+        margin-bottom: 0;
+    }
+
+    .csui-sidebar a {
+        color: var(--chatt-color-primary-dark);
+        text-decoration: underline;
+    }
+
+    // Promote key WebShare links to primary buttons
+    .csui-sidebar a[href*='/NewUser' i] {
+        @include buttons.button(primary);
+    }
+    .csui-sidebar a[href*='/Login' i] {
+        @include buttons.button(gold);
+    }
+    .csui-sidebar a[href*='/NewUser' i],
+    .csui-sidebar a[href*='/Login' i] {
+        display: block;
+        text-align: center;
+        margin: 0.5rem 0 1.5rem;
+        text-decoration: none;
+
+        strong {
+            font-weight: 600;
+        }
+    }
+
+    /* Make sure the main text block uses a reasonable body size */
+    #block-yui_3_17_2_1_1559159472532_12338 {
+        font-size: 0.98rem;
+        line-height: 1.6;
+    }
+
+    /* Make the heading block feel like a mid-size H1 */
+    #block-yui_3_17_2_1_1559151158365_37574 h1,
+    #block-yui_3_17_2_1_1559151158365_37574 h2,
+    #block-yui_3_17_2_1_1559151158365_37574 h3 {
+        font-family: var(--chatt-font-heading);
+        font-weight: 700;
+        font-size: 2rem;
+        line-height: 1.25;
+        color: var(--chatt-color-primary-dark);
+        // margin-bottom: 0.75rem;
+        margin: 0 auto;
+        max-width: 960px;
+    }
+
+    #block-yui_3_17_2_1_1559159472532_12338 ul {
+        margin-left: 1rem !important;
+        padding-left: 1rem !important;
+    }
+
+    /* Small responsive tweak: stack sidebar under main on narrow screens */
+    @media (max-width: 768px) {
+        .csui-layout {
+            // flex-direction: column;
+            grid-template-columns: 1fr;
+        }
+
+        // .csui-sidebar {
+        //     flex: 1 1 auto;
+        // }
+    }
+}
+
+html.csui-theme.csui-landing-page:not([data-csui-enabled]) {
+    .csui-hidden {
+        display: block !important;
+    }
+
+    .csui-layout {
+        display: block;
+    }
+
+    .csui-sidebar {
+        display: none;
+    }
+}

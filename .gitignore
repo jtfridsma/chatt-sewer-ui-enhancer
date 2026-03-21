@@ -1,0 +1,24 @@
+node_modules/
+npm-debug.log*
+yarn-error.log*
+pnpm-lock.yaml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor configs
+.vscode/
+.idea/
+
+# Generated build output
+public/main.js
+public/main.css
+public/*.map
+
+# Packaged extension output
+dist/
+*.zip
+
+# Sass cache
+.sass-cache/

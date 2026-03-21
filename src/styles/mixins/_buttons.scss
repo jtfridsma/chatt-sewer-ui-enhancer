@@ -1,0 +1,93 @@
+// Mixins for button styling
+@mixin button-base() {
+    background-color: var(--chatt-color-primary);
+    border-color: var(--chatt-color-primary);
+    color: white;
+    background: none;
+    background-image: none;
+    clip-path: none;
+    height: auto;
+    width: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.75rem 1.5rem;
+    margin: 0;
+    font-family: var(--chatt-font-sans);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.2;
+    text-transform: none;
+    letter-spacing: 0.01em;
+    border-radius: 999px;
+    border: 2px solid transparent;
+    box-shadow: var(--chatt-shadow-soft);
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: opacity var(--chatt-transition-fast);
+    // transition:
+    //     opacity var(--chatt-transition-fast),
+    //     background-color var(--chatt-transition-fast),
+    //     border-color var(--chatt-transition-fast),
+    //     box-shadow var(--chatt-transition-fast),
+    //     transform var(--chatt-transition-fast),
+    //     color var(--chatt-transition-fast);
+
+    &:hover:not(:disabled):not(.disabled) {
+        opacity: 0.7;
+    }
+
+    &:focus-visible:not(:disabled):not(.disabled) {
+        outline: 3px solid var(--chatt-color-accent);
+        outline-offset: 2px;
+    }
+
+    &:disabled,
+    &.disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+}
+
+@mixin button($variant: primary) {
+    @include button-base();
+
+    @if $variant == primary {
+        // Chattanooga blue
+        background-color: var(--chatt-color-primary);
+        border-color: var(--chatt-color-primary);
+        color: white;
+    } @else if $variant == gold {
+        // Chattanooga gold
+        background-color: var(--chatt-color-accent);
+        border-color: var(--chatt-color-accent);
+        color: var(--chatt-color-text);
+    } @else if $variant == secondary {
+        // Ghost/secondary style
+        // background-color: white;
+        // border-color: var(--chatt-color-border-subtle);
+        // color: var(--chatt-color-primary-dark);
+        background-color: transparent;
+        border-color: white;
+        color: white;
+        box-shadow: none;
+    } @else if $variant == link {
+        // Link-style button
+        background: none;
+        background-color: transparent;
+        border: none;
+        box-shadow: none;
+        padding: 0;
+        margin: 0;
+        border-radius: 0;
+        color: inherit;
+        text-decoration: underline;
+        font-weight: 500;
+        font-size: 0.875rem;
+        display: inline;
+        cursor: pointer;
+    }
+}

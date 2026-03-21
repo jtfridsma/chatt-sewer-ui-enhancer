@@ -1,0 +1,87 @@
+@use 'sass:color';
+@use '../utilities/tokens';
+@use '../mixins/buttons';
+@use '../mixins/layout';
+
+// WebShare guest pay page
+html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-guest-pay {
+    // Form resets
+    .field {
+        margin: 0;
+        height: auto;
+        width: 100%;
+    }
+
+    .field input {
+        margin: 0;
+        background-color: white;
+        color: var(--chatt-color-text);
+    }
+
+    // Labels
+    #Main_AccountPanel .label {
+        color: white;
+        font-weight: 600;
+        margin-bottom: 0 !important;
+        padding-left: 0;
+        text-align: left;
+
+        // Dynamically injected span around the "Enter the account number..." text
+        span.csui-guestpay-label-text {
+            // TODO: abstract out this style to a mixin or other reusable place
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        // Bring back these line breaks
+        br:not(:first-of-type) {
+            display: inline-block;
+        }
+
+        // Apply margin between text and field
+        .field {
+            margin-top: 0.25rem !important;
+        }
+    }
+
+    .error_label {
+        font-size: 0.875rem;
+        margin-top: 1rem !important;
+        margin-bottom: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding: 0.25rem 0.5rem;
+        text-align: center;
+        height: auto;
+        width: 100% !important;
+        background-color: color.adjust(tokens.$chatt-color-danger, $lightness: 50%);
+        border: 1px solid tokens.$chatt-color-danger;
+        color: tokens.$chatt-color-danger;
+        border-radius: var(--chatt-radius-md);
+
+        &:empty {
+            display: none;
+        }
+    }
+
+    // Button containers
+    .demo_button_area {
+        @include layout.flex(column, 1.5rem);
+
+        // Necessary to enumerate these margins
+        margin-top: 2rem !important;
+        margin-bottom: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    // Buttons
+    #Main_LoginButton {
+        @include buttons.button(gold);
+    }
+
+    #Main_CancelButton {
+        @include buttons.button(link);
+    }
+}

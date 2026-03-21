@@ -1,0 +1,113 @@
+@use '../mixins/buttons';
+@use '../mixins/layout';
+
+// WebShare page common styles
+html[data-csui-enabled].csui-theme.csui-webshare {
+    --csui-input-focus-outline-color: var(--chatt-color-accent);
+
+    body {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        align-items: center;
+        padding: 1.5rem;
+
+        @media (max-width: 35rem) {
+            padding: 1.5rem 0.75rem;
+        }
+    }
+
+    // Chattanooga logo
+    #masterLogo img {
+        height: 100px;
+        width: auto;
+    }
+
+    // Custom header section, injected by theme.js
+    .csui-webshare-header {
+        @include layout.flex(column, 0.25rem);
+
+        text-align: center !important;
+        margin-top: 1rem;
+        margin-bottom: 1.5rem;
+
+        .csui-webshare-eyebrow,
+        .csui-webshare-heading {
+            margin: 0;
+        }
+
+        .csui-webshare-eyebrow {
+            font-size: 0.875rem;
+            font-weight: 400;
+            color: var(--chatt-color-text-muted);
+        }
+
+        .csui-webshare-heading {
+            font-size: 2rem;
+        }
+    }
+
+    // form:has(#loginarea) {
+    //     width: 100%;
+    //     max-width: 32rem;
+    //     // margin-inline: auto;
+    // }
+
+    // Main container
+    #loginarea {
+        display: block;
+        background-color: var(--chatt-color-primary-dark); // dark Chattanooga blue
+        border-radius: var(--chatt-radius-lg); // same token used for .card on chattanooga.gov
+        padding: 2rem;
+        margin-top: 1rem !important;
+        margin-bottom: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        min-width: 32rem;
+        width: 100%;
+        max-width: 32rem;
+        margin-inline: auto;
+        color: white;
+        box-shadow: var(--chatt-shadow-soft);
+        height: auto;
+
+        // table {
+        //     display: grid;
+        // }
+
+        @media (max-width: 35rem) {
+            min-width: calc(100vw - 1.5rem); // full width minus horizontal padding of body - hacky?
+            padding: 2rem 1rem;
+        }
+    }
+
+    #loginarea br {
+        display: none;
+    }
+
+    // Table resets
+    #loginarea table {
+        width: 100%;
+        border-spacing: 0;
+        border-collapse: collapse;
+        margin: 0 !important;
+    }
+
+    // Button resets
+    input[type='submit'] {
+        @include buttons.button(primary);
+    }
+
+    .footer {
+        font-size: 0.875rem;
+        font-weight: 400;
+        color: var(--chatt-color-text-muted);
+        text-align: center;
+    }
+}
+
+html:not([data-csui-enabled]).csui-theme.csui-webshare {
+    .csui-webshare-header {
+        display: none;
+    }
+}

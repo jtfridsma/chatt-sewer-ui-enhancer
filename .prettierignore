@@ -1,0 +1,14 @@
+# Ignore compiled assets
+public/main.css
+public/main.js
+public/*.map
+
+# Ignore all icons and static assets
+public/icons/
+
+# Node modules
+node_modules/
+
+# Ignore output zips if you ever export the extension
+dist/
+*.zip

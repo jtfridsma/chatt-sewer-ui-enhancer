@@ -1,0 +1,85 @@
+@use 'sass:color';
+@use '../utilities/tokens';
+@use '../mixins/buttons';
+@use '../mixins/layout';
+
+// WebShare login page
+html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-login {
+    // Form resets
+    .field {
+        margin: 0;
+        height: auto;
+        width: 100%;
+
+        input {
+            margin: 0;
+            background-color: white;
+            color: var(--chatt-color-text);
+        }
+    }
+
+    // Labels
+    .loginlabel {
+        color: white;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        padding-left: 0;
+
+        &:not(:first-of-type) {
+            margin-top: 1rem;
+        }
+    }
+
+    .error_label {
+        font-size: 0.875rem;
+        margin-top: 1rem !important;
+        margin-bottom: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding: 0.25rem 0.5rem;
+        text-align: center;
+        height: auto;
+        width: 100% !important;
+        background-color: color.adjust(tokens.$chatt-color-danger, $lightness: 50%);
+        border: 1px solid tokens.$chatt-color-danger;
+        color: tokens.$chatt-color-danger;
+        border-radius: var(--chatt-radius-md);
+
+        // Hide empty and seemingly empty error labels
+        &:not([style*='word-wrap: normal;']),
+        &:has(#Main_BrowserLabel:empty) {
+            display: none;
+        }
+
+        &:empty {
+            display: none;
+        }
+    }
+
+    // Button containers
+    div[align='center']:not(#loginarea):has(input[type='submit']) {
+        margin-top: 1.5rem;
+
+        &:has(#Main_Login_LoginButton) {
+            @include layout.flex(column);
+        }
+
+        &:has(#Main_Login_ForgotButton) {
+            @include layout.flex();
+        }
+    }
+
+    // Buttons
+    #Main_Login_LoginButton {
+        @include buttons.button(gold);
+    }
+
+    #Main_Login_GuestButton {
+        @include buttons.button(secondary);
+    }
+
+    #Main_Login_ForgotButton,
+    #Main_Login_NewUserButton {
+        @include buttons.button(link);
+    }
+}

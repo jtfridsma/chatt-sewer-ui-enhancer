@@ -1,0 +1,44 @@
+// Base styles for all SewerPayments Chattanooga theme
+html[data-csui-enabled].csui-theme {
+    font-size: 16px;
+
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: var(--chatt-font-sans);
+        color: var(--chatt-color-text);
+        background-color: var(--chatt-color-bg);
+    }
+
+    // Generic containers / cards
+    .panel,
+    .card,
+    .login-panel,
+    .content-wrapper {
+        background-color: var(--chatt-color-surface);
+        border-radius: var(--chatt-radius-lg);
+        border: 1px solid var(--chatt-color-border-subtle);
+        box-shadow: var(--chatt-shadow-soft);
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+        font-family: var(--chatt-font-heading);
+        font-weight: 600;
+        color: var(--chatt-color-primary-dark);
+    }
+
+    hr {
+        color: var(--chatt-color-border-subtle);
+        background-color: var(--chatt-color-border-subtle);
+    }
+}
+
+// Reset when csui-theme is disabled too
+html:not([data-csui-enabled]).csui-theme {
+    font-size: 16px !important;
+}
