@@ -2,7 +2,7 @@
 @use '../mixins/layout';
 
 // WebShare page common styles
-html[data-csui-enabled].csui-theme.csui-webshare {
+html[data-csui-enabled].csui-theme.csui-webshare:not(.csui-webshare-dashboard) {
     --csui-input-focus-outline-color: var(--chatt-color-accent);
 
     body {

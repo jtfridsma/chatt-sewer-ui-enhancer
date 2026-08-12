@@ -74,31 +74,42 @@ function ensureFontsLoaded() {
     // Best-effort: inject Google Fonts stylesheet once per page.
     // Note: host-page CSP may block external font loads; in that case fallbacks will be used.
     if (typeof document === 'undefined') return;
-    if (document.getElementById('csui-google-fonts')) return;
 
     const head = document.head || document.getElementsByTagName('head')[0];
     if (!head) return;
 
-    const preconnect1 = document.createElement('link');
-    preconnect1.id = 'csui-google-fonts-preconnect-1';
-    preconnect1.rel = 'preconnect';
-    preconnect1.href = 'https://fonts.googleapis.com';
+    ensureHeadLink(head, {
+        id: 'csui-google-fonts-preconnect-1',
+        rel: 'preconnect',
+        href: 'https://fonts.googleapis.com',
+    });
+    ensureHeadLink(head, {
+        id: 'csui-google-fonts-preconnect-2',
+        rel: 'preconnect',
+        href: 'https://fonts.gstatic.com',
+        crossOrigin: 'anonymous',
+    });
+    ensureHeadLink(head, {
+        id: 'csui-google-fonts',
+        rel: 'stylesheet',
+        href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Gabarito:wght@400;500;600;700&display=swap',
+    });
+    ensureHeadLink(head, {
+        id: 'csui-google-symbols',
+        rel: 'stylesheet',
+        href: 'https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded&icon_names=account_circle,autorenew,block,check_circle,close,description,edit_note,gas_meter,keyboard_arrow_down,lock,logout,payments,receipt_long,warning&display=block',
+    });
+}
 
-    const preconnect2 = document.createElement('link');
-    preconnect2.id = 'csui-google-fonts-preconnect-2';
-    preconnect2.rel = 'preconnect';
-    preconnect2.href = 'https://fonts.gstatic.com';
-    preconnect2.crossOrigin = 'anonymous';
+function ensureHeadLink(head, attrs) {
+    if (!head || !attrs?.id || document.getElementById(attrs.id)) return;
 
-    const css = document.createElement('link');
-    css.id = 'csui-google-fonts';
-    css.rel = 'stylesheet';
-    css.href =
-        'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Gabarito:wght@400;500;600;700&display=swap';
-
-    head.appendChild(preconnect1);
-    head.appendChild(preconnect2);
-    head.appendChild(css);
+    const link = document.createElement('link');
+    Object.entries(attrs).forEach(([name, value]) => {
+        if (value === undefined || value === null) return;
+        link[name] = value;
+    });
+    head.appendChild(link);
 }
 
 function addWebShareHeading(ctx) {

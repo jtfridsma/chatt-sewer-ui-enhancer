@@ -19,6 +19,12 @@
       "js": ["public/main.js"],
       "css": ["public/main.css"],
       "run_at": "document_start"
+    },
+    {
+      "matches": ["https://share.dwcorp.com/WebShare/*", "https://share.dwcorp.com/webshare/*"],
+      "js": ["public/csui-modern-bridge.js"],
+      "run_at": "document_idle",
+      "world": "MAIN"
     }
   ],
   "web_accessible_resources": [

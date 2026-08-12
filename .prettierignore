@@ -1,6 +1,7 @@
 # Ignore compiled assets
 public/main.css
 public/main.js
+public/csui-modern-bridge.js
 public/*.map
 
 # Ignore all icons and static assets

@@ -3,6 +3,7 @@
 import { getChattContext } from './utilities/context.js';
 import { applyThemeClasses } from './utilities/theme.js';
 import { addThemeToggle } from './components/theme-toggle.js';
+import { setupModernDashboardIntegration } from './modern/dashboard.js';
 
 function init() {
     try {
@@ -12,6 +13,7 @@ function init() {
 
         applyThemeClasses(ctx);
         addThemeToggle();
+        setupModernDashboardIntegration(ctx);
     } catch (err) {
         // Fail silently in production so we don't break the host page.
         // Uncomment for dev:

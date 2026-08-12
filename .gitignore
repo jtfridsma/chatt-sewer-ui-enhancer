@@ -14,6 +14,7 @@ Thumbs.db
 # Generated build output
 public/main.js
 public/main.css
+public/csui-modern-bridge.js
 public/*.map
 
 # Packaged extension output

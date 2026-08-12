@@ -2,9 +2,13 @@
 import { build, context } from 'esbuild';
 
 const sharedConfig = {
-    entryPoints: ['src/scripts/main.js'],
+    entryPoints: {
+        main: 'src/scripts/main.js',
+        'csui-modern-bridge': 'src/scripts/modern/bridge/page-bridge.js',
+    },
     bundle: true,
-    outfile: 'public/main.js',
+    outdir: 'public',
+    entryNames: '[name]',
     platform: 'browser',
     format: 'iife',
     target: ['chrome110'],
