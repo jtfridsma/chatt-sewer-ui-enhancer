@@ -9,8 +9,11 @@ export function createDashboardView({ host, actions }) {
     let selectedDetailTab = 'summary';
     let statementsExpanded = false;
     let chartInstances = [];
+    let detachActionMenuEvents = () => {};
 
     function renderLoading() {
+        detachActionMenuEvents();
+        detachActionMenuEvents = () => {};
         destroyCharts();
         shadow.innerHTML = `
             <style>${getDashboardStyles()}</style>
@@ -59,6 +62,8 @@ export function createDashboardView({ host, actions }) {
     }
 
     function destroy() {
+        detachActionMenuEvents();
+        detachActionMenuEvents = () => {};
         destroyCharts();
         shadow.innerHTML = '';
         currentState = null;
@@ -74,6 +79,9 @@ export function createDashboardView({ host, actions }) {
     }
 
     function bindEvents() {
+        detachActionMenuEvents();
+        detachActionMenuEvents = bindActionMenuEvents();
+
         shadow.querySelectorAll('[data-account-option]').forEach((control) => {
             control.addEventListener('click', () => {
                 const value = control.getAttribute('data-account-option') || '';
@@ -121,7 +129,10 @@ export function createDashboardView({ host, actions }) {
                 if (action === 'profile') actions?.openProfile?.();
                 if (action === 'password') actions?.openChangePassword?.();
                 if (action === 'sign-out') actions?.signOut?.();
-                if (action) event.preventDefault();
+                if (action) {
+                    closeActionMenus();
+                    event.preventDefault();
+                }
             });
         });
 
@@ -147,6 +158,47 @@ export function createDashboardView({ host, actions }) {
                 nextTab?.focus();
                 nextTab?.click();
             });
+        });
+    }
+
+    function bindActionMenuEvents() {
+        const menus = Array.from(shadow.querySelectorAll('[data-action-menu]'));
+        if (!menus.length) return () => {};
+
+        const closeMenusOutside = (event) => {
+            const path = event.composedPath();
+            menus.forEach((menu) => {
+                if (menu.open && !path.includes(menu)) menu.open = false;
+            });
+        };
+        const closeMenusOnEscape = (event) => {
+            if (event.key !== 'Escape') return;
+            const openMenu = menus.find((menu) => menu.open);
+            if (!openMenu) return;
+            openMenu.open = false;
+            openMenu.querySelector('summary')?.focus();
+        };
+        const keepOneMenuOpen = (event) => {
+            const openedMenu = event.currentTarget;
+            if (!openedMenu.open) return;
+            menus.forEach((menu) => {
+                if (menu !== openedMenu) menu.open = false;
+            });
+        };
+
+        document.addEventListener('click', closeMenusOutside);
+        document.addEventListener('keydown', closeMenusOnEscape);
+        menus.forEach((menu) => menu.addEventListener('toggle', keepOneMenuOpen));
+        return () => {
+            document.removeEventListener('click', closeMenusOutside);
+            document.removeEventListener('keydown', closeMenusOnEscape);
+            menus.forEach((menu) => menu.removeEventListener('toggle', keepOneMenuOpen));
+        };
+    }
+
+    function closeActionMenus() {
+        shadow.querySelectorAll('[data-action-menu][open]').forEach((menu) => {
+            menu.open = false;
         });
     }
 
@@ -178,20 +230,47 @@ function renderHeader() {
                 </div>
             </div>
             <nav class="modern-header__actions" aria-label="Account actions">
-                <details class="action-menu">
+                <details class="action-menu action-menu--account action-menu--desktop" data-action-menu>
                     <summary>
                         <span>Account</span>
                         ${renderIcon('keyboard_arrow_down', 'action-menu__icon')}
                     </summary>
                     <div class="action-menu__panel">
-                        <button type="button" class="menu-button" data-action="profile">Update Profile</button>
-                        <button type="button" class="menu-button" data-action="password">Change Password</button>
+                        <button type="button" class="menu-button" data-action="profile">
+                            ${renderIcon('account_circle', 'button-icon')}
+                            <span>Update Profile</span>
+                        </button>
+                        <button type="button" class="menu-button" data-action="password">
+                            ${renderIcon('lock', 'button-icon')}
+                            <span>Change Password</span>
+                        </button>
                     </div>
                 </details>
-                <button type="button" class="ghost-action" data-action="sign-out">
+                <button type="button" class="ghost-action action-menu--desktop" data-action="sign-out">
                     ${renderIcon('logout', 'button-icon')}
                     <span>Sign Out</span>
                 </button>
+                <details class="action-menu action-menu--mobile" data-action-menu>
+                    <summary>
+                        <span>Menu</span>
+                        ${renderIcon('keyboard_arrow_down', 'action-menu__icon')}
+                    </summary>
+                    <div class="action-menu__panel">
+                        <button type="button" class="menu-button" data-action="profile">
+                            ${renderIcon('account_circle', 'button-icon')}
+                            <span>Update Profile</span>
+                        </button>
+                        <button type="button" class="menu-button" data-action="password">
+                            ${renderIcon('lock', 'button-icon')}
+                            <span>Change Password</span>
+                        </button>
+                        <div class="menu-divider" role="separator"></div>
+                        <button type="button" class="menu-button" data-action="sign-out">
+                            ${renderIcon('logout', 'button-icon')}
+                            <span>Sign Out</span>
+                        </button>
+                    </div>
+                </details>
             </nav>
         </header>
     `;
@@ -324,7 +403,6 @@ function renderAccountSidebarGroup(label, accounts, selected) {
 
 function renderAccountSidebarItem(account, selected) {
     const isSelected = isSameAccount(account, selected);
-    const salientAmount = getSidebarSalientAmount(account);
 
     return `
         <button
@@ -337,10 +415,10 @@ function renderAccountSidebarItem(account, selected) {
                 <span class="account-nav-item__address">${escapeHtml(extractStreetAddress(account.serviceAddress) || 'Service address unavailable')}</span>
                 ${renderStatusPill(account)}
             </span>
-            <span class="account-number">${escapeHtml(account.accountNumber || 'Account')}</span>
-            <span class="account-nav-item__meta">
-                <span>${escapeHtml(salientAmount.label)}</span>
-                <strong>${escapeHtml(formatCurrency(salientAmount.value))}</strong>
+            <span class="account-nav-item__details account-nav-item__label">
+                <span>${escapeHtml(account.accountNumber || 'Account')}</span>
+                <span aria-hidden="true">•</span>
+                <span>Balance ${escapeHtml(formatCurrency(account.currentBalance))}</span>
             </span>
         </button>
     `;
@@ -348,32 +426,44 @@ function renderAccountSidebarItem(account, selected) {
 
 function renderAccountOverview({ account, flags }) {
     const canPay = flags.showPaymentButton !== false;
+    const streetAddress =
+        extractStreetAddress(account.serviceAddress) || 'Service address unavailable';
+    const lastPayment = [
+        formatOptionalCurrency(account.lastPaymentAmount),
+        formatDate(account.lastPaymentDate),
+    ]
+        .filter(Boolean)
+        .join(' · ');
     return `
         <section class="panel account-overview" aria-labelledby="csui-modern-overview-heading">
             <div class="account-overview__body">
                 <div class="account-overview__identity">
-                    <p class="eyebrow">Selected Account</p>
-                    <h2 id="csui-modern-overview-heading">${escapeHtml(account.accountNumber || 'Account')}</h2>
-                    ${renderStatusPill(account)}
-                    <p class="muted">${escapeHtml(account.serviceAddress || 'Service address unavailable')}</p>
+                    <p class="account-overview__label">Account</p>
+                    <h2 id="csui-modern-overview-heading">${escapeHtml(streetAddress)}</h2>
                 </div>
                 <dl class="account-overview__facts">
+                    <div>
+                        <dt>Account Number</dt>
+                        <dd>${escapeHtml(account.accountNumber || 'Account')}</dd>
+                    </div>
+                    <div>
+                        <dt>Account Status</dt>
+                        <dd>${renderStatusPill(account)}</dd>
+                    </div>
                     <div>
                         <dt>Current Balance</dt>
                         <dd>${formatCurrency(account.currentBalance)}</dd>
                     </div>
                     <div>
                         <dt>Last Payment</dt>
-                        <dd>${escapeHtml(formatOptionalCurrency(account.lastPaymentAmount) || 'Not available')}</dd>
-                    </div>
-                    <div>
-                        <dt>Last Payment Date</dt>
-                        <dd>${escapeHtml(formatDate(account.lastPaymentDate) || 'Not available')}</dd>
+                        <dd>${escapeHtml(lastPayment || 'Not available')}</dd>
                     </div>
                 </dl>
                 <div class="account-overview__amount" aria-label="Amount due">
-                    <span>Amount Due</span>
-                    <strong>${formatCurrency(account.totalAmountDue)}</strong>
+                    <div class="account-overview__amount-primary">
+                        <span class="account-overview__label">Amount Due</span>
+                        <strong>${formatCurrency(account.totalAmountDue)}</strong>
+                    </div>
                     ${
                         canPay
                             ? `<button class="primary-action" type="button" data-action="pay-now">Pay Now</button>`
@@ -405,7 +495,7 @@ function renderDetailTabs({
     const activeTab = tabs.some(([id]) => id === selectedDetailTab) ? selectedDetailTab : 'summary';
 
     return `
-        <section class="panel detail-tabs" aria-label="Account details">
+        <section class="detail-tabs" aria-label="Account details">
             <div class="detail-tabs__list" role="tablist" aria-label="Account detail sections">
                 ${tabs
                     .map(([id, label]) => {
@@ -428,7 +518,7 @@ function renderDetailTabs({
             </div>
             <div
                 id="csui-modern-tab-panel"
-                class="detail-tabs__panel"
+                class="detail-tabs__panel ${activeTab === 'summary' ? 'detail-tabs__panel--summary' : 'panel'}"
                 role="tabpanel"
                 aria-labelledby="csui-modern-tab-${escapeAttr(activeTab)}"
             >
@@ -499,15 +589,24 @@ function renderAccountSummaryTab({ account, waterMeters, flags, loading, selecte
 
     return `
         <div class="summary-tab">
-            <dl class="summary-grid">
-                ${fields.map(([label, value]) => renderField(label, value)).join('')}
-            </dl>
-            ${renderConsumptionPanel({
-                waterMeters,
-                flags,
-                loading,
-                selectedWaterMeterKey,
-            })}
+            <section class="panel summary-card" aria-labelledby="csui-modern-account-information-heading">
+                <div class="panel__body">
+                    <h2 id="csui-modern-account-information-heading">Account Information</h2>
+                    <dl class="summary-grid">
+                        ${fields.map(([label, value]) => renderSummaryField(label, value)).join('')}
+                    </dl>
+                </div>
+            </section>
+            <section class="panel summary-card" aria-labelledby="csui-modern-water-heading">
+                <div class="panel__body">
+                    ${renderConsumptionPanel({
+                        waterMeters,
+                        flags,
+                        loading,
+                        selectedWaterMeterKey,
+                    })}
+                </div>
+            </section>
         </div>
     `;
 }
@@ -541,8 +640,8 @@ function renderStatement(statement) {
         <li>
             ${
                 statement.url
-                    ? `<a href="${escapeAttr(statement.url)}">${renderIcon('description', 'statement-list__icon')}${escapeHtml(label)}</a>`
-                    : `<span>${renderIcon('description', 'statement-list__icon')}${escapeHtml(label)}</span>`
+                    ? `<a href="${escapeAttr(statement.url)}">${renderIcon('description', 'statement-list__icon')}<span class="statement-list__label">${escapeHtml(label)}</span></a>`
+                    : `<span>${renderIcon('description', 'statement-list__icon')}<span class="statement-list__label">${escapeHtml(label)}</span></span>`
             }
         </li>
     `;
@@ -595,8 +694,11 @@ function renderMeterTabs(meters, activeMeterKey) {
                                 data-meter-tab="${escapeAttr(meter.key)}"
                             >
                                 ${renderIcon('gas_meter', 'meter-tab__icon')}
-                                <span>${escapeHtml(formatMeterLabel(meter.series.meterNumber, index))}</span>
-                                <small>${escapeHtml(formatShortDate(meter.latestDate) || 'No reads')}</small>
+                                <span class="meter-tab__label">${escapeHtml(formatMeterLabel(meter.series.meterNumber, index))}</span>
+                                <small>
+                                    <span>Last Read</span>
+                                    ${escapeHtml(formatShortDate(meter.latestDate) || 'No reads')}
+                                </small>
                             </button>
                         `;
                     })
@@ -644,11 +746,11 @@ function renderBarChart(readings, meterNumber) {
 
     return `
         <figure class="chart">
-            <figcaption class="chart__summary">
-                <span class="chart__summary-title">Meter ${escapeHtml(cleanMeterNumber(meterNumber) || 'Unknown')}</span>
-                <span>${escapeHtml(readings.length)} readings</span>
-                <span>Latest ${escapeHtml(latestDate || 'not available')}</span>
-            </figcaption>
+            <dl class="chart__summary">
+                ${renderField('Meter Number', cleanMeterNumber(meterNumber) || 'Unknown')}
+                ${renderField('Readings', readings.length)}
+                ${renderField('Last Read', latestDate || 'Not available')}
+            </dl>
             <div class="chart__canvas-wrap">
                 <canvas
                     data-consumption-chart
@@ -689,6 +791,15 @@ function renderBillingPanel({ selected, flags }) {
 function renderField(label, value) {
     return `
         <div class="field">
+            <dt>${escapeHtml(label)}</dt>
+            <dd>${escapeHtml(value || 'Not available')}</dd>
+        </div>
+    `;
+}
+
+function renderSummaryField(label, value) {
+    return `
+        <div class="summary-field">
             <dt>${escapeHtml(label)}</dt>
             <dd>${escapeHtml(value || 'Not available')}</dd>
         </div>
@@ -745,13 +856,6 @@ function getStatusIconName(account) {
 
 function renderIcon(name, className = '') {
     return `<span class="material-symbols-rounded icon ${escapeAttr(className)}" aria-hidden="true">${escapeHtml(name)}</span>`;
-}
-
-function getSidebarSalientAmount(account) {
-    const due = Number(account?.totalAmountDue) || 0;
-    const balance = Number(account?.currentBalance) || 0;
-    if (due > 0) return { label: 'Due', value: due };
-    return { label: 'Balance', value: balance };
 }
 
 function extractStreetAddress(value) {

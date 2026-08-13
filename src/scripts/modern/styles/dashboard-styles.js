@@ -2,6 +2,7 @@ export function getDashboardStyles() {
     return `
         :host {
             all: initial;
+            --card-radius: 8px;
             color-scheme: light;
             display: block;
             min-height: 100vh;
@@ -20,7 +21,7 @@ export function getDashboardStyles() {
 
         a {
             color: #0f6684;
-            font-weight: 650;
+            font-weight: 600;
             text-decoration: none;
         }
 
@@ -99,11 +100,15 @@ export function getDashboardStyles() {
             padding: 0.35rem 0;
         }
 
+        .action-menu--mobile {
+            display: none;
+        }
+
         .eyebrow {
-            margin: 0 0 0.2rem;
+            margin: 0 0 0.35rem;
             color: #4f6475;
             font-size: 0.82rem;
-            font-weight: 650;
+            font-weight: 400;
         }
 
         h1, h2, h3, p {
@@ -113,7 +118,7 @@ export function getDashboardStyles() {
         h1 {
             font-size: 1.55rem;
             line-height: 1.2;
-            font-weight: 750;
+            font-weight: 700;
             color: #092f49;
         }
 
@@ -131,7 +136,7 @@ export function getDashboardStyles() {
 
         .panel {
             border: 1px solid #d9e2ea;
-            border-radius: 8px;
+            border-radius: var(--card-radius);
             background: #ffffff;
             box-shadow: 0 8px 24px rgba(9, 47, 73, 0.08);
             overflow: hidden;
@@ -192,15 +197,14 @@ export function getDashboardStyles() {
 
         .account-group {
             display: grid;
-            gap: 0.35rem;
+            gap: 0.5rem;
         }
 
         .account-group h3 {
             color: #4f6475;
             font-size: 0.74rem;
-            font-weight: 850;
+            font-weight: 400;
             padding: 0 0.35rem;
-            text-transform: uppercase;
         }
 
         .account-group__items {
@@ -212,67 +216,67 @@ export function getDashboardStyles() {
             appearance: none;
             width: 100%;
             display: grid;
-            gap: 0.34rem;
-            border: 0;
-            border-left: 4px solid transparent;
+            gap: 0.5rem;
+            border: 1px solid #d9e2ea;
             border-radius: 8px;
-            background: transparent;
+            background: rgba(255, 255, 255, 0.64);
             color: #172033;
             cursor: pointer;
-            min-height: 96px;
-            padding: 0.68rem 0.72rem 0.68rem 0.82rem;
+            padding: 0.68rem 0.72rem;
             text-align: left;
         }
 
-        .account-nav-item:hover {
-            background: rgba(255, 255, 255, 0.64);
+        .account-nav-item:not(.is-selected):hover {
+            border-color: #0f6684;
+            background: #f7fbfd;
         }
 
         .account-nav-item.is-selected {
-            border-left-color: #0f6684;
+            border-color: #0f4c6d;
             background: #ffffff;
-            box-shadow: 0 8px 24px rgba(9, 47, 73, 0.08);
-        }
-
-        .account-nav-item__top,
-        .account-nav-item__meta {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            justify-content: space-between;
+            box-shadow: inset 0 0 0 1px #0f4c6d;
         }
 
         .account-nav-item__top {
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: start;
+            gap: 0.5rem;
         }
 
         .account-nav-item__address {
+            margin-top: 3px;
             color: #092f49;
             font-size: 0.98rem;
-            font-weight: 850;
+            font-weight: 700;
             line-height: 1.25;
             overflow-wrap: anywhere;
         }
 
-        .account-nav-item__meta {
-            color: #42596b;
-            font-size: 0.78rem;
-            font-weight: 750;
+        .account-nav-item__details {
+            display: flex;
+            align-items: center;
+            gap: 0.42rem;
             flex-wrap: wrap;
         }
 
-        .account-nav-item__meta strong {
-            color: #172033;
-            font-size: 0.9rem;
+        .account-nav-item__label {
+            color: #4f6475;
+            font-size: 0.74rem;
+            font-weight: 400;
         }
 
         .detail-tabs {
             display: grid;
+            gap: 1rem;
         }
 
         .account-overview__body {
             display: grid;
-            grid-template-columns: minmax(0, 1.1fr) minmax(260px, 0.8fr) minmax(220px, 0.34fr);
+            grid-template-areas:
+                "identity amount"
+                "facts amount";
+            grid-template-columns: minmax(0, 1fr) minmax(220px, 0.34fr);
             gap: 1rem;
             align-items: stretch;
             padding: 1rem;
@@ -286,48 +290,68 @@ export function getDashboardStyles() {
 
         .account-overview__identity {
             display: grid;
+            grid-area: identity;
             align-content: start;
             gap: 0.45rem;
         }
 
+        .account-overview__label {
+            margin: 0;
+            color: #4f6475;
+            font-size: 0.78rem;
+            font-weight: 400;
+        }
+
+        .account-overview__identity h2 {
+            margin: 0;
+            color: #092f49;
+            font-size: 2rem;
+            line-height: 1.05;
+        }
+
         .account-overview__facts {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-area: facts;
             gap: 0.75rem;
             margin: 0;
-            align-content: center;
+            align-content: end;
         }
 
         .account-overview__facts div {
             display: grid;
-            gap: 0.16rem;
+            gap: 0.32rem;
         }
 
         .account-overview__facts dt {
             color: #4f6475;
             font-size: 0.74rem;
-            font-weight: 800;
+            font-weight: 400;
         }
 
         .account-overview__facts dd {
             margin: 0;
             color: #172033;
             font-size: 0.94rem;
-            font-weight: 750;
+            font-weight: 700;
             overflow-wrap: anywhere;
         }
 
         .account-overview__amount {
             display: grid;
+            grid-area: amount;
             align-content: center;
             gap: 0.7rem;
             justify-items: stretch;
+            padding: 1rem;
+            border: 1px solid #d9e8ee;
+            border-radius: 10px;
+            background: #f3f8fa;
         }
 
-        .account-overview__amount span {
-            color: #4f6475;
-            font-size: 0.78rem;
-            font-weight: 800;
+        .account-overview__amount-primary {
+            display: grid;
+            gap: 0.45rem;
         }
 
         .account-overview__amount strong {
@@ -341,22 +365,22 @@ export function getDashboardStyles() {
             display: flex;
             gap: 0.35rem;
             overflow-x: auto;
-            padding: 0.55rem 0.65rem 0;
-            border-bottom: 1px solid #d9e2ea;
-            background: #f6f9fb;
+            padding: 0.35rem;
+            border: 1px solid #d9e2ea;
+            border-radius: var(--card-radius);
+            background: rgba(255, 255, 255, 0.64);
         }
 
         .detail-tab {
             appearance: none;
-            border: 0;
-            border-bottom: 3px solid transparent;
-            border-radius: 8px 8px 0 0;
+            border: 1px solid transparent;
+            border-radius: 8px;
             background: transparent;
             color: #4f6475;
             cursor: pointer;
             min-height: 42px;
-            padding: 0.65rem 0.9rem 0.55rem;
-            font-weight: 800;
+            padding: 0.58rem 0.9rem;
+            font-weight: 700;
             white-space: nowrap;
         }
 
@@ -366,16 +390,26 @@ export function getDashboardStyles() {
         }
 
         .detail-tab.is-selected {
-            border-bottom-color: #0f6684;
+            border-color: #0f4c6d;
             background: #ffffff;
             color: #092f49;
+            box-shadow: inset 0 0 0 1px #0f4c6d;
         }
 
         .detail-tabs__panel {
             padding: 1rem;
         }
 
+        .detail-tabs__panel--summary {
+            padding: 0;
+        }
+
         .summary-tab {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .summary-card .panel__body {
             display: grid;
             gap: 1rem;
         }
@@ -398,7 +432,7 @@ export function getDashboardStyles() {
             border-radius: 999px;
             padding: 0.18rem 0.55rem;
             font-size: 0.74rem;
-            font-weight: 800;
+            font-weight: 700;
             line-height: 1;
             white-space: nowrap;
         }
@@ -440,12 +474,6 @@ export function getDashboardStyles() {
             outline-offset: 2px;
         }
 
-        .account-number {
-            color: #627587;
-            font-size: 0.76rem;
-            font-weight: 700;
-        }
-
         .muted {
             color: #4f6475;
             font-size: 0.88rem;
@@ -461,7 +489,7 @@ export function getDashboardStyles() {
             border-radius: 8px;
             min-height: 40px;
             padding: 0.62rem 0.9rem;
-            font-weight: 750;
+            font-weight: 700;
             cursor: pointer;
         }
 
@@ -520,9 +548,7 @@ export function getDashboardStyles() {
             transition: transform 150ms ease;
         }
 
-        .action-menu[open] .action-menu__icon,
-        .action-menu:hover .action-menu__icon,
-        .action-menu:focus-within .action-menu__icon {
+        .action-menu--account[open] .action-menu__icon {
             transform: rotate(180deg);
         }
 
@@ -541,12 +567,14 @@ export function getDashboardStyles() {
             box-shadow: 0 16px 34px rgba(9, 47, 73, 0.18);
         }
 
-        .action-menu:hover > .action-menu__panel,
-        .action-menu:focus-within > .action-menu__panel {
-            display: grid;
+        .action-menu:not([open]) > .action-menu__panel {
+            display: none;
         }
 
         .menu-button {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
             border: 0;
             background: transparent;
             color: #092f49;
@@ -603,7 +631,7 @@ export function getDashboardStyles() {
         .setting-toggle__title {
             color: #092f49;
             font-size: 0.9rem;
-            font-weight: 750;
+            font-weight: 700;
         }
 
         .setting-toggle__hint {
@@ -644,8 +672,40 @@ export function getDashboardStyles() {
 
         .summary-grid {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 0.85rem 1rem;
+            margin: 0;
+        }
+
+        .summary-field {
+            display: grid;
+            grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+            align-items: baseline;
+            gap: 1rem;
+            padding: 0.65rem 0;
+            border-bottom: 1px solid #edf2f5;
+        }
+
+        .summary-field:first-child {
+            padding-top: 0;
+        }
+
+        .summary-field:last-child {
+            padding-bottom: 0;
+            border-bottom: 0;
+        }
+
+        .summary-field dt {
+            max-width: 300px;
+            color: #4f6475;
+            font-size: 0.74rem;
+            font-weight: 400;
+        }
+
+        .summary-field dd {
+            margin: 0;
+            color: #172033;
+            font-size: 0.98rem;
+            font-weight: 600;
+            overflow-wrap: anywhere;
         }
 
         .billing-panel {
@@ -692,21 +752,21 @@ export function getDashboardStyles() {
 
         .field {
             display: grid;
-            gap: 0.18rem;
+            gap: 0.32rem;
             min-width: 0;
         }
 
         .field dt {
             color: #4f6475;
-            font-size: 0.78rem;
-            font-weight: 700;
+            font-size: 0.74rem;
+            font-weight: 400;
         }
 
         .field dd {
             margin: 0;
             color: #172033;
             font-size: 0.98rem;
-            font-weight: 650;
+            font-weight: 600;
             overflow-wrap: anywhere;
         }
 
@@ -733,6 +793,19 @@ export function getDashboardStyles() {
             display: inline-flex;
             align-items: center;
             gap: 0.45rem;
+        }
+
+        .statement-list a {
+            color: #0f4c6d;
+            text-decoration: none;
+        }
+
+        .statement-list a .statement-list__label {
+            text-decoration: underline;
+        }
+
+        .statement-list a:hover {
+            color: #093c5a;
         }
 
         .statement-list__icon {
@@ -771,7 +844,7 @@ export function getDashboardStyles() {
             appearance: none;
             display: grid;
             grid-template-columns: auto minmax(0, 1fr);
-            gap: 0.14rem 0.45rem;
+            gap: 0.14rem 0.75rem;
             min-width: 148px;
             border: 1px solid #cbd8e1;
             border-radius: 8px;
@@ -787,9 +860,10 @@ export function getDashboardStyles() {
             align-self: center;
             color: #0f6684;
             font-size: 1.35rem;
+            font-weight: 400;
             font-variation-settings:
                 "FILL" 0,
-                "wght" 300,
+                "wght" 400,
                 "GRAD" 0,
                 "opsz" 24;
         }
@@ -801,19 +875,25 @@ export function getDashboardStyles() {
 
         .meter-tab.is-selected {
             border-color: #0f4c6d;
-            background: #e8f4f8;
+            background: #f7fbfd;
             box-shadow: inset 0 0 0 1px #0f4c6d;
         }
 
-        .meter-tab span {
-            font-weight: 800;
+        .meter-tab__label {
+            font-weight: 700;
             overflow-wrap: anywhere;
         }
 
         .meter-tab small {
-            color: #4f6475;
+            display: flex;
+            gap: 0.25rem;
             font-size: 0.74rem;
-            font-weight: 700;
+            font-weight: 400;
+        }
+
+        .meter-tab small span {
+            color: #4f6475;
+            font-weight: 400;
         }
 
         .meter-tabs__panel {
@@ -833,20 +913,10 @@ export function getDashboardStyles() {
         }
 
         .chart__summary {
-            display: flex;
-            align-items: center;
-            gap: 0.45rem 0.8rem;
-            flex-wrap: wrap;
-            color: #4f6475;
-            font-size: 0.82rem;
-            line-height: 1.35;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.85rem 1rem;
             margin: 0;
-        }
-
-        .chart__summary-title {
-            color: #092f49;
-            font-size: 0.95rem;
-            font-weight: 800;
         }
 
         .chart__canvas-wrap {
@@ -930,8 +1000,20 @@ export function getDashboardStyles() {
             .dashboard-layout,
             .account-overview__body,
             .account-overview__facts,
-            .summary-grid {
+            .chart__summary {
                 grid-template-columns: 1fr;
+            }
+
+            .summary-field {
+                grid-template-columns: 1fr;
+                gap: 0.32rem;
+            }
+
+            .account-overview__body {
+                grid-template-areas:
+                    "identity"
+                    "facts"
+                    "amount";
             }
 
             .modern-header {
@@ -985,6 +1067,15 @@ export function getDashboardStyles() {
                 width: 100%;
             }
 
+            .action-menu--desktop {
+                display: none;
+            }
+
+            .action-menu--mobile {
+                display: block;
+                width: 100%;
+            }
+
             .modern-header__logo {
                 height: 62px;
                 max-width: 180px;
@@ -998,9 +1089,43 @@ export function getDashboardStyles() {
             }
 
             .ghost-action,
-            .action-menu summary {
+            .action-menu summary,
+            .menu-button {
                 width: 100%;
-                text-align: center;
+            }
+
+            .action-menu summary {
+                justify-content: space-between;
+            }
+        }
+
+        @media (min-width: 621px) and (max-width: 900px) {
+            .modern-header__actions {
+                display: flex;
+                flex-wrap: nowrap;
+            }
+
+            .account-overview__facts {
+                display: flex;
+                gap: 0.75rem;
+            }
+
+            .account-overview__facts > div {
+                flex: 1 1 0;
+            }
+
+            .summary-field {
+                grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+                gap: 1rem;
+            }
+
+            .chart__summary {
+                display: flex;
+                gap: 0.85rem 1rem;
+            }
+
+            .chart__summary .field {
+                flex: 1 1 0;
             }
         }
     `;

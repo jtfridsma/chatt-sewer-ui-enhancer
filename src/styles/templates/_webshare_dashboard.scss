@@ -70,18 +70,24 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
         padding: 1rem 1.15rem;
         border-bottom: 1px solid #d9e2ea;
         background: #f6f9fb;
+        font-weight: 700;
     }
 
     .modal-title {
-        display: inline-flex;
+        display: flex;
         align-items: center;
+        justify-content: flex-start;
+        flex: 1 1 auto;
         gap: 0.55rem;
         margin: 0;
+        min-width: 0;
         color: #092f49;
         font-family: var(--chatt-font-heading);
         font-size: 1.15rem;
-        font-weight: 750;
+        font-weight: 700;
         line-height: 1.25;
+        text-align: left;
+        overflow-wrap: anywhere;
 
         &::before {
             content: attr(data-csui-modal-icon);
