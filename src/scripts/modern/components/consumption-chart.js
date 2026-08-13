@@ -88,8 +88,6 @@ function mountConsumptionChart(canvas) {
         },
     });
 
-    window.requestAnimationFrame(() => chart.resize());
-
     return chart;
 }
 

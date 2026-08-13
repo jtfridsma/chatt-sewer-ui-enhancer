@@ -60,6 +60,10 @@
         background-color: var(--chatt-color-primary);
         border-color: var(--chatt-color-primary);
         color: white;
+
+        &:hover:not(:disabled):not(.disabled) {
+            color: white;
+        }
     } @else if $variant == gold {
         // Chattanooga gold
         background-color: var(--chatt-color-accent);

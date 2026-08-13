@@ -1,6 +1,7 @@
 const GENERATED_ATTR = 'data-csui-generated';
 const GENERATED_CONTACT = 'contact-link';
 const GENERATED_NOTICE = 'notice-class';
+const ORIGINAL_TEXT_ATTR = 'data-csui-original-text';
 
 const SIDEBAR_ID = 'csui-sidebar';
 const SIDEBAR_TITLE_ID = 'csui-sidebar-title';
@@ -14,7 +15,12 @@ const NOTICE_SNIPPET = 'NOTICE TO CUSTOMERS:';
 const NOTICE_CLASS = 'csui-notice';
 const ADDRESS_TEXT = '1250 Market Street, Suite 1008, Downtown Chattanooga';
 const MAPS_URL = 'https://maps.app.goo.gl/ZNVe8TicMDkF3vkG8';
-const PHONE_NUMBERS = ['(423) 643-6311', '(844) 898-3672', '(833) 237-8064'];
+const PHONE_NUMBERS = [
+    { source: '(423) 643-6311' },
+    { source: '(423)643-6311', display: '(423) 643-6311' },
+    { source: '(844) 898-3672' },
+    { source: '(833) 237-8064' },
+];
 
 let currentContext = null;
 let hasToggleListener = false;
@@ -84,14 +90,15 @@ function linkifyContacts(rootEl) {
         return link;
     });
 
-    PHONE_NUMBERS.forEach((number) => {
-        wrapExactText(rootEl, number, (text) => {
+    PHONE_NUMBERS.forEach(({ source, display = source }) => {
+        wrapExactText(rootEl, source, (text) => {
             const digits = text.replace(/\D+/g, '');
             const href = digits.length === 10 ? `tel:+1${digits}` : `tel:${digits}`;
             const link = document.createElement('a');
             link.href = href;
-            link.textContent = text;
+            link.textContent = display;
             link.setAttribute(GENERATED_ATTR, GENERATED_CONTACT);
+            link.setAttribute(ORIGINAL_TEXT_ATTR, text);
             return link;
         });
     });
@@ -153,7 +160,12 @@ function unwrapGeneratedContactLinks(rootEl) {
         const parent = link.parentNode;
         if (!parent) return;
 
-        parent.replaceChild(document.createTextNode(link.textContent || ''), link);
+        parent.replaceChild(
+            document.createTextNode(
+                link.getAttribute(ORIGINAL_TEXT_ATTR) || link.textContent || ''
+            ),
+            link
+        );
         parent.normalize();
     });
 }

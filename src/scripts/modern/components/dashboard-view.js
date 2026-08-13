@@ -10,6 +10,28 @@ export function createDashboardView({ host, actions }) {
     let statementsExpanded = false;
     let chartInstances = [];
     let detachActionMenuEvents = () => {};
+    let sidebarLayoutFrame = null;
+
+    const scheduleSidebarLayout = () => {
+        if (sidebarLayoutFrame !== null) return;
+        sidebarLayoutFrame = window.requestAnimationFrame(() => {
+            sidebarLayoutFrame = null;
+            syncSidebarHeight();
+        });
+    };
+
+    const syncSidebarHeight = () => {
+        const sidebar = shadow.querySelector('.dashboard-sidebar');
+        if (!sidebar || window.innerWidth <= 900) return;
+
+        const viewportInset = 16;
+        const top = Math.max(viewportInset, sidebar.getBoundingClientRect().top);
+        const height = Math.max(0, window.innerHeight - top - viewportInset);
+        sidebar.style.setProperty('--dashboard-sidebar-height', `${height}px`);
+    };
+
+    window.addEventListener('scroll', scheduleSidebarLayout, { passive: true });
+    window.addEventListener('resize', scheduleSidebarLayout);
 
     function renderLoading() {
         detachActionMenuEvents();
@@ -59,11 +81,16 @@ export function createDashboardView({ host, actions }) {
 
         bindEvents();
         chartInstances = mountConsumptionCharts(shadow);
+        scheduleSidebarLayout();
     }
 
     function destroy() {
         detachActionMenuEvents();
         detachActionMenuEvents = () => {};
+        window.removeEventListener('scroll', scheduleSidebarLayout);
+        window.removeEventListener('resize', scheduleSidebarLayout);
+        if (sidebarLayoutFrame !== null) window.cancelAnimationFrame(sidebarLayoutFrame);
+        sidebarLayoutFrame = null;
         destroyCharts();
         shadow.innerHTML = '';
         currentState = null;
@@ -353,7 +380,10 @@ function renderDashboardGrid({
 
     return `
         <div class="dashboard-layout">
-            ${renderAccountSidebar({ accounts, selected })}
+            <div class="dashboard-sidebar">
+                ${renderAccountSidebar({ accounts, selected })}
+                ${renderDashboardHelper()}
+            </div>
             <div class="dashboard-content">
                 ${renderAccountOverview({ account: selected, flags })}
                 ${renderDetailTabs({
@@ -369,6 +399,26 @@ function renderDashboardGrid({
                 })}
             </div>
         </div>
+    `;
+}
+
+function renderDashboardHelper() {
+    return `
+        <aside class="dashboard-helper" aria-label="Dashboard help and service contacts">
+            <p>
+                Trouble with this enhanced dashboard? Try disabling the plugin, or
+                <a
+                    href="https://github.com/jtfridsma/chatt-sewer-ui-enhancer/issues/new"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >report an issue</a>.
+            </p>
+            <p>
+                For sewer service or payment issues, contact 311 at
+                <a href="tel:+14236436311">(423) 643-6311</a> or
+                <a href="mailto:311@chattanooga.gov">311@chattanooga.gov</a>.
+            </p>
+        </aside>
     `;
 }
 

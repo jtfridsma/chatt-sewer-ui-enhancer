@@ -173,15 +173,38 @@ export function getDashboardStyles() {
             min-width: 0;
         }
 
-        .account-sidebar {
+        .dashboard-sidebar {
             position: sticky;
             top: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            height: var(--dashboard-sidebar-height, calc(100dvh - 2rem));
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            padding-right: 0.15rem;
+        }
+
+        .account-sidebar {
             display: grid;
             gap: 0.8rem;
-            align-self: start;
-            max-height: calc(100vh - 2rem);
-            overflow: auto;
-            padding: 0.2rem 0.15rem 0.2rem 0;
+            flex: 0 0 auto;
+            padding: 0.2rem 0;
+        }
+
+        .dashboard-helper {
+            display: grid;
+            gap: 0.65rem;
+            margin-top: auto;
+            color: #4f6475;
+            font-size: 0.74rem;
+            font-weight: 400;
+            line-height: 1.45;
+            padding: 0.2rem 0.35rem;
+        }
+
+        .dashboard-helper a {
+            font-weight: 600;
         }
 
         .account-sidebar__header {
@@ -1031,7 +1054,26 @@ export function getDashboardStyles() {
 
             .account-sidebar {
                 position: static;
-                max-height: none;
+            }
+
+            .dashboard-sidebar {
+                position: static;
+                display: contents;
+                height: auto;
+                overflow: visible;
+                padding: 0;
+            }
+
+            .account-sidebar {
+                order: 1;
+            }
+
+            .dashboard-content {
+                order: 2;
+            }
+
+            .dashboard-helper {
+                order: 3;
             }
 
             .account-list {
