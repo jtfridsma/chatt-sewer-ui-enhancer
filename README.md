@@ -74,6 +74,7 @@ when the inactive label was inferred.
 - `npm run build` — builds CSS and JS (`build:*`)
 - `npm run build:css` — Sass -> `public/main.css` (compressed)
 - `npm run build:js` — esbuild -> `public/main.js` (bundled, minified IIFE)
+- `npm run package` — validates, builds, and creates a versioned extension ZIP in `dist/`
 - `npm run dev` — watch CSS and JS in parallel
 - `npm run dev:css` — watch Sass
 - `npm run dev:js` — watch JS (esbuild)
@@ -85,3 +86,13 @@ Build toolchain:
 
 - esbuild (`build.mjs`) bundles the main content script, MAIN-world bridge, and lazy Chart.js module
 - Sass compiles `src/styles/main.scss`
+
+## Beta packaging
+
+Run `npm run package` to create a distributable extension archive. The command runs formatting and
+tests through the production build, clears `dist/`, verifies that `manifest.json` and `package.json`
+versions match, validates every manifest resource, copies only the manifest and referenced runtime
+files into a clean staging directory, and writes `dist/chatt-sewer-ui-enhancer-v<VERSION>.zip`.
+
+The ZIP contains `manifest.json` at its root and can be submitted or shared without the source tree,
+development dependencies, or stale unreferenced build output.
