@@ -2,14 +2,28 @@ const MODAL_OPEN_CLASS = 'csui-modern-modal-open';
 
 export function setupModernModalIntegration() {
     let observer = null;
+    let syncFrame = null;
+    let modalOpen = null;
 
     function sync() {
         const modals = getOpenModals();
         modals.forEach(tagModal);
-        setModalOpenState(modals.length > 0);
+        const nextOpen = modals.length > 0;
+        if (nextOpen !== modalOpen) {
+            modalOpen = nextOpen;
+            setModalOpenState(nextOpen);
+        }
     }
 
-    observer = new MutationObserver(sync);
+    function scheduleSync(records) {
+        if (!records.some(canAffectModal) || syncFrame !== null) return;
+        syncFrame = window.requestAnimationFrame(() => {
+            syncFrame = null;
+            sync();
+        });
+    }
+
+    observer = new MutationObserver(scheduleSync);
     observer.observe(document.body, {
         childList: true,
         subtree: true,
@@ -22,6 +36,9 @@ export function setupModernModalIntegration() {
         destroy() {
             observer?.disconnect();
             observer = null;
+            if (syncFrame !== null) window.cancelAnimationFrame(syncFrame);
+            syncFrame = null;
+            modalOpen = false;
             setModalOpenState(false);
             document.querySelectorAll('.modal[data-csui-modern-modal]').forEach((modal) => {
                 modal.removeAttribute('data-csui-modern-modal');
@@ -34,6 +51,16 @@ export function setupModernModalIntegration() {
     };
 }
 
+function canAffectModal(record) {
+    const target = record.target;
+    if (target instanceof Element && target.closest('.modal')) return true;
+    if (record.type !== 'childList') return false;
+    return [...record.addedNodes, ...record.removedNodes].some(
+        (node) =>
+            node instanceof Element && (node.matches('.modal') || node.querySelector('.modal'))
+    );
+}
+
 function getOpenModals() {
     return Array.from(document.querySelectorAll('.modal')).filter((modal) => {
         const style = window.getComputedStyle(modal);
@@ -42,14 +69,18 @@ function getOpenModals() {
 }
 
 function tagModal(modal) {
-    modal.setAttribute('data-csui-modern-modal', 'true');
+    if (!modal.hasAttribute('data-csui-modern-modal')) {
+        modal.setAttribute('data-csui-modern-modal', 'true');
+    }
 
     const title = modal.querySelector('.modal-title');
     const titleText = title?.textContent?.trim() || '';
     const kind = getModalKind(titleText);
-    modal.setAttribute('data-csui-modal-kind', kind);
+    if (modal.getAttribute('data-csui-modal-kind') !== kind) {
+        modal.setAttribute('data-csui-modal-kind', kind);
+    }
 
-    if (title) {
+    if (title && title.getAttribute('data-csui-modal-icon') !== getModalIcon(kind)) {
         title.setAttribute('data-csui-modal-icon', getModalIcon(kind));
     }
 }
@@ -58,11 +89,7 @@ function getModalKind(title) {
     const normalized = title.toLowerCase();
     if (normalized.includes('password')) return 'password';
     if (normalized.includes('profile')) return 'profile';
-    if (
-        normalized.includes('pay') ||
-        normalized.includes('payment') ||
-        normalized.includes('stored payment')
-    ) {
+    if (normalized.includes('pay')) {
         return 'payment';
     }
     return 'generic';

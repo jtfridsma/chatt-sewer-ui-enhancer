@@ -1,8 +1,13 @@
 // src/scripts/components/theme-toggle.js
 
-const STORAGE_KEY_ENABLED = 'csui-theme-enabled';
+import {
+    dispatchThemeToggle,
+    persistThemeEnabled,
+    readThemeEnabled,
+    setThemeEnabled,
+} from '../utilities/theme-state.js';
+
 const STORAGE_KEY_ERROR_FLAG = 'csui-has-error';
-const ROOT_ENABLED_ATTR = 'data-csui-enabled';
 
 const UI_ROOT_ID = 'csui-ui';
 const LAUNCHER_ID = 'csui-launcher';
@@ -41,8 +46,8 @@ export function addThemeToggle() {
     launcher.setAttribute('aria-controls', PANEL_ID);
 
     // Restore enabled state (default: on)
-    const initialOn = readEnabledState();
-    setEnabledState(initialOn);
+    const initialOn = readThemeEnabled();
+    setThemeEnabled(initialOn);
     toggle.checked = initialOn;
 
     // Restore error badge state (default: none)
@@ -96,13 +101,11 @@ export function addThemeToggle() {
     // Toggle enabled state
     toggle.addEventListener('change', () => {
         const next = !!toggle.checked;
-        setEnabledState(next);
-        persistEnabledState(next);
+        setThemeEnabled(next);
+        persistThemeEnabled(next);
 
         try {
-            window.dispatchEvent(
-                new CustomEvent('csui-theme-toggle', { detail: { enabled: next } })
-            );
+            dispatchThemeToggle(next);
         } catch {
             // no-op
         }
@@ -160,36 +163,6 @@ function getMarkup() {
       </div>
     </div>
   `;
-}
-
-function readEnabledState() {
-    try {
-        const saved =
-            (typeof localStorage !== 'undefined' && localStorage.getItem(STORAGE_KEY_ENABLED)) ||
-            'true';
-        return saved !== 'false';
-    } catch {
-        return true;
-    }
-}
-
-function persistEnabledState(enabled) {
-    try {
-        localStorage.setItem(STORAGE_KEY_ENABLED, enabled ? 'true' : 'false');
-    } catch {
-        // ignore
-    }
-}
-
-function setEnabledState(enabled) {
-    const root = document.documentElement;
-    if (!root) return;
-
-    if (enabled) {
-        root.setAttribute(ROOT_ENABLED_ATTR, 'true');
-    } else {
-        root.removeAttribute(ROOT_ENABLED_ATTR);
-    }
 }
 
 function readErrorFlag() {

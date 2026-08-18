@@ -2,6 +2,7 @@ import { createLegacyActions } from './adapters/legacy-actions.js';
 import { createLegacyDataAdapter } from './adapters/legacy-data.js';
 import { createDashboardView } from './components/dashboard-view.js';
 import { setupModernModalIntegration } from './modal-integration.js';
+import { isThemeEnabled, subscribeToThemeToggle } from '../utilities/theme-state.js';
 
 const MODERN_ROOT_ID = 'csui-modern-dashboard';
 const MODERN_READY_ATTR = 'data-csui-modern-dashboard';
@@ -10,16 +11,19 @@ const DEBUG_STORAGE_KEY = 'csui-modern-debug';
 const RELATED_DATA_LOADING_MS = 6500;
 
 let instance = null;
+let toggleListenerInstalled = false;
 
 export function setupModernDashboardIntegration(ctx) {
     if (!ctx?.isChattWebShare || ctx.pageType !== 'dashboard') return;
 
     syncModernDashboard();
 
-    window.addEventListener('csui-theme-toggle', () => syncModernDashboard());
+    if (toggleListenerInstalled) return;
+    toggleListenerInstalled = true;
+    subscribeToThemeToggle(syncModernDashboard);
 }
 
-export function initializeModernDashboard() {
+function initializeModernDashboard() {
     if (instance) return instance;
 
     const logger = createLogger();
@@ -185,7 +189,7 @@ export function initializeModernDashboard() {
     }
 }
 
-export function destroyModernDashboard() {
+function destroyModernDashboard() {
     if (!instance) {
         showLegacyDashboard();
         return;
@@ -193,16 +197,16 @@ export function destroyModernDashboard() {
     instance.destroy();
 }
 
-export function hideLegacyDashboard() {
+function hideLegacyDashboard() {
     setModernDashboardReady(true);
 }
 
-export function showLegacyDashboard() {
+function showLegacyDashboard() {
     setModernDashboardReady(false);
 }
 
 function syncModernDashboard() {
-    if (isEnhancementsEnabled()) {
+    if (isThemeEnabled()) {
         initializeModernDashboard();
     } else {
         destroyModernDashboard();
@@ -256,10 +260,6 @@ function setModernDashboardReady(ready) {
         root.removeAttribute(MODERN_READY_ATTR);
         root.classList.remove(MODERN_CLASS);
     }
-}
-
-function isEnhancementsEnabled() {
-    return document.documentElement?.hasAttribute('data-csui-enabled') === true;
 }
 
 function getDefaultAccount(state) {

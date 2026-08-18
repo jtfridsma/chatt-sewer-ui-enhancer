@@ -1,38 +1,39 @@
-// src/scripts/templates/webshare.js
-//
+import { isThemeEnabled, subscribeToThemeToggle } from '../utilities/theme-state.js';
+
 // WebShare-specific DOM enhancements.
-// Currently: GuestPay label text wrapping for styling hooks (one-time, no revert).
 
 const LABEL_SNIPPET = 'Enter the account number you wish to pay below.';
 const WRAP_CLASS = 'csui-guestpay-label-text';
+const MAX_WRAP_ATTEMPTS = 20;
+const WRAP_RETRY_MS = 250;
+
+let errorLabelsTrimmed = false;
+let toggleListenerInstalled = false;
+let wrapRetryId = null;
+let wrapAttempts = 0;
 
 export function setupWebShareEnhancements(ctx) {
     if (typeof document === 'undefined') return;
     if (!ctx?.isChattWebShare) return;
 
-    const root = document.documentElement;
-    if (!root) return;
-
     trimErrorLabelsOnce();
 
     if (ctx.pageType === 'guest-pay') {
-        // Try immediately (covers "toggle already on" once theme.js sets data-csui-enabled early)
-        if (root.hasAttribute('data-csui-enabled')) {
-            attemptWrapWithRetries();
-        }
+        if (isThemeEnabled()) attemptWrapWithRetries();
 
-        // Also try once when the user enables later
-        window.addEventListener('csui-theme-toggle', (ev) => {
-            if (!ev?.detail?.enabled) return;
-            attemptWrapWithRetries();
+        if (toggleListenerInstalled) return;
+        toggleListenerInstalled = true;
+        subscribeToThemeToggle((event) => {
+            if (event?.detail?.enabled) attemptWrapWithRetries();
+            else cancelWrapRetries();
         });
     }
 }
 
 function trimErrorLabelsOnce() {
-    if (trimErrorLabelsOnce._done) return;
-    trimErrorLabelsOnce._done = true;
+    if (errorLabelsTrimmed) return;
     if (!document.body) return;
+    errorLabelsTrimmed = true;
 
     const labels = document.querySelectorAll('.error_label');
     labels.forEach((el) => {
@@ -61,22 +62,24 @@ function applyGuestPayLabelWrap() {
 }
 
 function attemptWrapWithRetries() {
-    // Avoid overlapping retry loops
-    if (attemptWrapWithRetries._running) return;
-    attemptWrapWithRetries._running = true;
+    if (wrapRetryId !== null) return;
+    wrapAttempts = 0;
 
-    let tries = 0;
-    const maxTries = 20; // ~5s at 250ms
     const tick = () => {
-        tries += 1;
+        wrapRetryId = null;
+        if (!isThemeEnabled()) return;
+        wrapAttempts += 1;
         const done = applyGuestPayLabelWrap();
-        if (done || tries >= maxTries) {
-            attemptWrapWithRetries._running = false;
-            return;
-        }
-        window.setTimeout(tick, 250);
+        if (done || wrapAttempts >= MAX_WRAP_ATTEMPTS) return;
+        wrapRetryId = window.setTimeout(tick, WRAP_RETRY_MS);
     };
     tick();
+}
+
+function cancelWrapRetries() {
+    if (wrapRetryId !== null) window.clearTimeout(wrapRetryId);
+    wrapRetryId = null;
+    wrapAttempts = 0;
 }
 
 function wrapFromPhrase(container, phrase, className) {

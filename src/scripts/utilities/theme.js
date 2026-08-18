@@ -2,6 +2,7 @@
 import { setupLandingPageEnhancements } from '../templates/landing-page.js';
 import { setupWebShareEnhancements } from '../templates/webshare.js';
 import { applyPageChrome, applyWebShareChrome } from './chrome.js';
+import { readThemeEnabled, setThemeEnabled } from './theme-state.js';
 
 export function applyThemeClasses(ctx) {
     if (!ctx?.isRelevant) return;
@@ -52,22 +53,7 @@ export function applyThemeClasses(ctx) {
 }
 
 function ensureEnabledState() {
-    if (typeof document === 'undefined') return;
-    const root = document.documentElement;
-    if (!root) return;
-
-    let saved = 'true';
-    try {
-        if (typeof localStorage !== 'undefined') {
-            saved = localStorage.getItem('csui-theme-enabled') || 'true';
-        }
-    } catch {
-        // ignore storage failures
-    }
-
-    const enabled = saved !== 'false';
-    if (enabled) root.setAttribute('data-csui-enabled', 'true');
-    else root.removeAttribute('data-csui-enabled');
+    setThemeEnabled(readThemeEnabled());
 }
 
 function ensureFontsLoaded() {

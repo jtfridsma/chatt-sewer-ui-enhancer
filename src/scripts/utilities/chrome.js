@@ -3,8 +3,9 @@
 // Browser chrome tweaks (title + favicon) for supported pages.
 
 const BASE_TITLE = 'Chattanooga Sewer Payment Portal';
+let baseFaviconApplied = false;
 
-function getExtensionUrl(path) {
+export function getExtensionUrl(path) {
     try {
         // Chrome MV3 content scripts
         if (typeof chrome !== 'undefined' && chrome?.runtime?.getURL) {
@@ -67,7 +68,7 @@ export function applyPageChrome(ctx) {
     setDocumentTitle({ baseTitle: BASE_TITLE, suffix: null });
 }
 
-export function setDocumentTitle({ baseTitle, suffix, separator = ' — ' }) {
+function setDocumentTitle({ baseTitle, suffix, separator = ' — ' }) {
     if (typeof document === 'undefined') return;
     if (!baseTitle) return;
 
@@ -76,9 +77,8 @@ export function setDocumentTitle({ baseTitle, suffix, separator = ' — ' }) {
 }
 
 function applyBaseFaviconOnce() {
-    // Mark as done so we don't churn the <head> on route changes / retries.
-    if (applyBaseFaviconOnce._done) return;
-    applyBaseFaviconOnce._done = true;
+    if (baseFaviconApplied) return;
+    baseFaviconApplied = true;
 
     const href16 = getExtensionUrl('public/icons/icon-16.png');
     const href32 = getExtensionUrl('public/icons/icon-32.png');

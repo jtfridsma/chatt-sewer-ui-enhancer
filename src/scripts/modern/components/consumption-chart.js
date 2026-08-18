@@ -2,6 +2,10 @@ import { BarController, BarElement, CategoryScale, Chart, LinearScale, Tooltip }
 
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip);
 
+const NUMBER_FORMATTER = new Intl.NumberFormat('en-US', {
+    maximumFractionDigits: 0,
+});
+
 export function mountConsumptionCharts(root) {
     if (!root?.querySelectorAll) return [];
 
@@ -115,7 +119,5 @@ function numberValue(value) {
 }
 
 function formatNumber(value) {
-    return new Intl.NumberFormat('en-US', {
-        maximumFractionDigits: 0,
-    }).format(Number(value) || 0);
+    return NUMBER_FORMATTER.format(Number(value) || 0);
 }

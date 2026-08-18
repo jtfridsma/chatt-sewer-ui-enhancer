@@ -1,5 +1,21 @@
-import { mountConsumptionCharts } from './consumption-chart.js';
-import { getDashboardStyles } from '../styles/dashboard-styles.js';
+import { mountConsumptionCharts } from './lazy-consumption-chart.js';
+import { DASHBOARD_STYLES } from '../styles/dashboard-styles.js';
+import {
+    escapeAttr,
+    escapeHtml,
+    extractStreetAddress,
+    formatCurrency,
+    formatDate,
+    formatOptionalCurrency,
+    formatShortDate,
+    normalizeReadings,
+} from './dashboard-format.js';
+import {
+    renderDashboardHelper,
+    renderHeader,
+    renderIcon,
+    renderSettingsToggles,
+} from './dashboard-fragments.js';
 
 export function createDashboardView({ host, actions }) {
     const shadow = host.shadowRoot || host.attachShadow({ mode: 'open' });
@@ -11,6 +27,15 @@ export function createDashboardView({ host, actions }) {
     let chartInstances = [];
     let detachActionMenuEvents = () => {};
     let sidebarLayoutFrame = null;
+    let renderGeneration = 0;
+
+    const style = document.createElement('style');
+    style.textContent = DASHBOARD_STYLES;
+    const content = document.createElement('div');
+    shadow.replaceChildren(style, content);
+    content.addEventListener('click', handleContentClick);
+    content.addEventListener('change', handleContentChange);
+    content.addEventListener('keydown', handleContentKeydown);
 
     const scheduleSidebarLayout = () => {
         if (sidebarLayoutFrame !== null) return;
@@ -27,18 +52,21 @@ export function createDashboardView({ host, actions }) {
         const viewportInset = 16;
         const top = Math.max(viewportInset, sidebar.getBoundingClientRect().top);
         const height = Math.max(0, window.innerHeight - top - viewportInset);
-        sidebar.style.setProperty('--dashboard-sidebar-height', `${height}px`);
+        const nextHeight = `${height}px`;
+        if (sidebar.style.getPropertyValue('--dashboard-sidebar-height') !== nextHeight) {
+            sidebar.style.setProperty('--dashboard-sidebar-height', nextHeight);
+        }
     };
 
     window.addEventListener('scroll', scheduleSidebarLayout, { passive: true });
     window.addEventListener('resize', scheduleSidebarLayout);
 
     function renderLoading() {
+        renderGeneration += 1;
         detachActionMenuEvents();
         detachActionMenuEvents = () => {};
         destroyCharts();
-        shadow.innerHTML = `
-            <style>${getDashboardStyles()}</style>
+        content.innerHTML = `
             <main class="shell" aria-busy="true">
                 <section class="panel">
                     <div class="empty">${renderInlineLoading('Loading account dashboard...')}</div>
@@ -48,6 +76,8 @@ export function createDashboardView({ host, actions }) {
     }
 
     function render(state) {
+        const generation = ++renderGeneration;
+        const focusTarget = captureFocusTarget(shadow.activeElement);
         destroyCharts();
         currentState = state;
         const accounts = Array.isArray(state?.accounts) ? state.accounts.filter(Boolean) : [];
@@ -60,10 +90,9 @@ export function createDashboardView({ host, actions }) {
             statementsExpanded = false;
         }
 
-        shadow.innerHTML = `
-            <style>${getDashboardStyles()}</style>
+        content.innerHTML = `
             <main class="shell" aria-label="Account dashboard">
-                ${renderHeader({ state, selected })}
+                ${renderHeader()}
                 ${
                     selected
                         ? renderDashboardGrid({
@@ -80,19 +109,32 @@ export function createDashboardView({ host, actions }) {
         `;
 
         bindEvents();
-        chartInstances = mountConsumptionCharts(shadow);
+        restoreFocusTarget(focusTarget);
+        mountConsumptionCharts(content)
+            .then((charts) => {
+                if (generation !== renderGeneration) {
+                    charts.forEach((chart) => chart.destroy());
+                    return;
+                }
+                chartInstances = charts;
+            })
+            .catch((error) => window.__CSUI__?.reportError?.(error));
         scheduleSidebarLayout();
     }
 
     function destroy() {
+        renderGeneration += 1;
         detachActionMenuEvents();
         detachActionMenuEvents = () => {};
         window.removeEventListener('scroll', scheduleSidebarLayout);
         window.removeEventListener('resize', scheduleSidebarLayout);
+        content.removeEventListener('click', handleContentClick);
+        content.removeEventListener('change', handleContentChange);
+        content.removeEventListener('keydown', handleContentKeydown);
         if (sidebarLayoutFrame !== null) window.cancelAnimationFrame(sidebarLayoutFrame);
         sidebarLayoutFrame = null;
         destroyCharts();
-        shadow.innerHTML = '';
+        content.replaceChildren();
         currentState = null;
         currentAccountValue = '';
         selectedWaterMeterKey = '';
@@ -108,84 +150,77 @@ export function createDashboardView({ host, actions }) {
     function bindEvents() {
         detachActionMenuEvents();
         detachActionMenuEvents = bindActionMenuEvents();
+    }
 
-        shadow.querySelectorAll('[data-account-option]').forEach((control) => {
-            control.addEventListener('click', () => {
-                const value = control.getAttribute('data-account-option') || '';
-                const account = currentState?.accounts?.find(
-                    (item) => getAccountValue(item) === value
-                );
-                if (account) actions?.selectAccount?.(account);
-            });
-        });
+    function handleContentClick(event) {
+        if (!(event.target instanceof Element)) return;
 
-        const detailTabs = Array.from(shadow.querySelectorAll('[data-detail-tab]'));
-        detailTabs.forEach((tab, index) => {
-            tab.addEventListener('click', () => {
-                selectedDetailTab = tab.getAttribute('data-detail-tab') || 'summary';
-                if (currentState) render(currentState);
-            });
-            tab.addEventListener('keydown', (event) => {
-                const nextIndex = getNextTabIndex(event, index, detailTabs.length);
-                if (nextIndex < 0) return;
-                event.preventDefault();
-                const nextTab = detailTabs[nextIndex];
-                nextTab?.focus();
-                nextTab?.click();
-            });
-        });
+        const accountControl = event.target.closest('[data-account-option]');
+        if (accountControl) {
+            const value = accountControl.getAttribute('data-account-option') || '';
+            const account = currentState?.accounts?.find((item) => getAccountValue(item) === value);
+            if (account) actions?.selectAccount?.(account);
+            return;
+        }
 
-        shadow.querySelector('[data-statements-expand]')?.addEventListener('click', () => {
+        const detailTab = event.target.closest('[data-detail-tab]');
+        if (detailTab) {
+            selectedDetailTab = detailTab.getAttribute('data-detail-tab') || 'summary';
+            if (currentState) render(currentState);
+            return;
+        }
+
+        if (event.target.closest('[data-statements-expand]')) {
             statementsExpanded = true;
             if (currentState) render(currentState);
-        });
+            return;
+        }
 
-        shadow.querySelectorAll('[data-account-option]').forEach((control, index, controls) => {
-            control.addEventListener('keydown', (event) => {
-                const nextIndex = getNextTabIndex(event, index, controls.length);
-                if (nextIndex < 0) return;
-                event.preventDefault();
-                controls[nextIndex]?.focus();
-            });
-        });
+        const actionControl = event.target.closest('[data-action]');
+        if (actionControl) {
+            const action = actionControl.getAttribute('data-action');
+            if (action === 'pay-now') actions?.openPayment?.();
+            if (action === 'profile') actions?.openProfile?.();
+            if (action === 'password') actions?.openChangePassword?.();
+            if (action === 'sign-out') actions?.signOut?.();
+            closeActionMenus();
+            event.preventDefault();
+            return;
+        }
 
-        shadow.querySelectorAll('[data-action]').forEach((control) => {
-            control.addEventListener('click', (event) => {
-                const action = control.getAttribute('data-action');
-                if (action === 'pay-now') actions?.openPayment?.();
-                if (action === 'profile') actions?.openProfile?.();
-                if (action === 'password') actions?.openChangePassword?.();
-                if (action === 'sign-out') actions?.signOut?.();
-                if (action) {
-                    closeActionMenus();
-                    event.preventDefault();
-                }
-            });
-        });
+        const meterTab = event.target.closest('[data-meter-tab]');
+        if (meterTab) {
+            selectedWaterMeterKey = meterTab.getAttribute('data-meter-tab') || '';
+            if (currentState) render(currentState);
+        }
+    }
 
-        shadow.querySelectorAll('[data-toggle-setting]').forEach((input) => {
-            input.addEventListener('change', () => {
-                const setting = input.getAttribute('data-toggle-setting');
-                if (setting === 'paperless') actions?.setPaperlessBilling?.(input.checked);
-                if (setting === 'autopay') actions?.setAutoPay?.(input.checked);
-            });
-        });
+    function handleContentChange(event) {
+        if (!(event.target instanceof HTMLInputElement)) return;
+        const setting = event.target.getAttribute('data-toggle-setting');
+        if (setting === 'paperless') actions?.setPaperlessBilling?.(event.target.checked);
+        if (setting === 'autopay') actions?.setAutoPay?.(event.target.checked);
+    }
 
-        const meterTabs = Array.from(shadow.querySelectorAll('[data-meter-tab]'));
-        meterTabs.forEach((tab, index) => {
-            tab.addEventListener('click', () => {
-                selectedWaterMeterKey = tab.getAttribute('data-meter-tab') || '';
-                if (currentState) render(currentState);
-            });
-            tab.addEventListener('keydown', (event) => {
-                const nextIndex = getNextTabIndex(event, index, meterTabs.length);
-                if (nextIndex < 0) return;
-                event.preventDefault();
-                const nextTab = meterTabs[nextIndex];
-                nextTab?.focus();
-                nextTab?.click();
-            });
-        });
+    function handleContentKeydown(event) {
+        if (!(event.target instanceof Element)) return;
+        const control = event.target.closest(
+            '[data-account-option], [data-detail-tab], [data-meter-tab]'
+        );
+        if (!control) return;
+
+        const attribute = control.hasAttribute('data-account-option')
+            ? 'data-account-option'
+            : control.hasAttribute('data-detail-tab')
+              ? 'data-detail-tab'
+              : 'data-meter-tab';
+        const controls = Array.from(content.querySelectorAll(`[${attribute}]`));
+        const nextIndex = getNextTabIndex(event, controls.indexOf(control), controls.length);
+        if (nextIndex < 0) return;
+        event.preventDefault();
+        const nextControl = controls[nextIndex];
+        nextControl?.focus();
+        if (attribute !== 'data-account-option') nextControl?.click();
     }
 
     function bindActionMenuEvents() {
@@ -229,11 +264,36 @@ export function createDashboardView({ host, actions }) {
         });
     }
 
+    function restoreFocusTarget(target) {
+        if (!target) return;
+        if (target.id) {
+            content.querySelector(`#${CSS.escape(target.id)}`)?.focus();
+            return;
+        }
+        const match = Array.from(content.querySelectorAll(`[${target.attribute}]`)).find(
+            (element) => element.getAttribute(target.attribute) === target.value
+        );
+        match?.focus();
+    }
+
     return {
         renderLoading,
         render,
         destroy,
     };
+}
+
+function captureFocusTarget(element) {
+    if (!(element instanceof Element)) return null;
+    if (element.id) return { id: element.id };
+
+    const attribute = [
+        'data-account-option',
+        'data-detail-tab',
+        'data-meter-tab',
+        'data-action',
+    ].find((name) => element.hasAttribute(name));
+    return attribute ? { attribute, value: element.getAttribute(attribute) } : null;
 }
 
 function getNextTabIndex(event, index, length) {
@@ -243,125 +303,6 @@ function getNextTabIndex(event, index, length) {
     if (event.key === 'Home') return 0;
     if (event.key === 'End') return length - 1;
     return -1;
-}
-
-function renderHeader() {
-    const logo = getPortalLogo();
-    return `
-        <header class="modern-header">
-            <div class="modern-header__identity">
-                ${logo ? renderHeaderLogo(logo) : ''}
-                <div class="modern-header__text">
-                    <p class="eyebrow">Chattanooga Sewer Payment Portal</p>
-                    <h1>Account Dashboard</h1>
-                </div>
-            </div>
-            <nav class="modern-header__actions" aria-label="Account actions">
-                <details class="action-menu action-menu--account action-menu--desktop" data-action-menu>
-                    <summary>
-                        <span>Account</span>
-                        ${renderIcon('keyboard_arrow_down', 'action-menu__icon')}
-                    </summary>
-                    <div class="action-menu__panel">
-                        <button type="button" class="menu-button" data-action="profile">
-                            ${renderIcon('account_circle', 'button-icon')}
-                            <span>Update Profile</span>
-                        </button>
-                        <button type="button" class="menu-button" data-action="password">
-                            ${renderIcon('lock', 'button-icon')}
-                            <span>Change Password</span>
-                        </button>
-                    </div>
-                </details>
-                <button type="button" class="ghost-action action-menu--desktop" data-action="sign-out">
-                    ${renderIcon('logout', 'button-icon')}
-                    <span>Sign Out</span>
-                </button>
-                <details class="action-menu action-menu--mobile" data-action-menu>
-                    <summary>
-                        <span>Menu</span>
-                        ${renderIcon('keyboard_arrow_down', 'action-menu__icon')}
-                    </summary>
-                    <div class="action-menu__panel">
-                        <button type="button" class="menu-button" data-action="profile">
-                            ${renderIcon('account_circle', 'button-icon')}
-                            <span>Update Profile</span>
-                        </button>
-                        <button type="button" class="menu-button" data-action="password">
-                            ${renderIcon('lock', 'button-icon')}
-                            <span>Change Password</span>
-                        </button>
-                        <div class="menu-divider" role="separator"></div>
-                        <button type="button" class="menu-button" data-action="sign-out">
-                            ${renderIcon('logout', 'button-icon')}
-                            <span>Sign Out</span>
-                        </button>
-                    </div>
-                </details>
-            </nav>
-        </header>
-    `;
-}
-
-function getPortalLogo() {
-    const logoImage =
-        document.querySelector('#masterLogo img') ||
-        document.querySelector('#masterLogo[src]') ||
-        document.querySelector('img[src*="logo" i]');
-    const src = logoImage?.currentSrc || logoImage?.src || logoImage?.getAttribute?.('src') || '';
-    if (!src) return null;
-
-    return {
-        src,
-        alt: logoImage.getAttribute?.('alt') || 'Chattanooga',
-    };
-}
-
-function renderHeaderLogo(logo) {
-    return `
-        <img
-            class="modern-header__logo"
-            src="${escapeAttr(logo.src)}"
-            alt="${escapeAttr(logo.alt)}"
-        />
-    `;
-}
-
-function renderSettingsToggles({ selected, flags }) {
-    const account = selected || {};
-    const paperlessDisabled = flags.allowPaperlessChange === false;
-    const autoPayDisabled = flags.allowRecurring === false;
-
-    return `
-        <label class="setting-toggle ${paperlessDisabled ? 'is-disabled' : ''}">
-            ${renderIcon('receipt_long', 'setting-toggle__icon')}
-            <span>
-                <span class="setting-toggle__title">Paperless Billing</span>
-                <span class="setting-toggle__hint">${account.paperlessBilling ? 'On' : 'Off'}</span>
-            </span>
-            <input
-                type="checkbox"
-                data-toggle-setting="paperless"
-                ${account.paperlessBilling ? 'checked' : ''}
-                ${paperlessDisabled ? 'disabled' : ''}
-            />
-            <span class="switch-ui" aria-hidden="true"></span>
-        </label>
-        <label class="setting-toggle ${autoPayDisabled ? 'is-disabled' : ''}">
-            ${renderIcon('autorenew', 'setting-toggle__icon')}
-            <span>
-                <span class="setting-toggle__title">Automatic Payment Plan</span>
-                <span class="setting-toggle__hint">${account.autoPay ? 'On' : 'Off'}</span>
-            </span>
-            <input
-                type="checkbox"
-                data-toggle-setting="autopay"
-                ${account.autoPay ? 'checked' : ''}
-                ${autoPayDisabled ? 'disabled' : ''}
-            />
-            <span class="switch-ui" aria-hidden="true"></span>
-        </label>
-    `;
 }
 
 function renderDashboardGrid({
@@ -399,26 +340,6 @@ function renderDashboardGrid({
                 })}
             </div>
         </div>
-    `;
-}
-
-function renderDashboardHelper() {
-    return `
-        <aside class="dashboard-helper" aria-label="Dashboard help and service contacts">
-            <p>
-                Trouble with this enhanced dashboard? Try disabling the plugin, or
-                <a
-                    href="https://github.com/jtfridsma/chatt-sewer-ui-enhancer/issues/new"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >report an issue</a>.
-            </p>
-            <p>
-                For sewer service or payment issues, contact 311 at
-                <a href="tel:+14236436311">(423) 643-6311</a> or
-                <a href="mailto:311@chattanooga.gov">311@chattanooga.gov</a>.
-            </p>
-        </aside>
     `;
 }
 
@@ -904,48 +825,6 @@ function getStatusIconName(account) {
     return 'check_circle';
 }
 
-function renderIcon(name, className = '') {
-    return `<span class="material-symbols-rounded icon ${escapeAttr(className)}" aria-hidden="true">${escapeHtml(name)}</span>`;
-}
-
-function extractStreetAddress(value) {
-    const address = String(value || '').trim();
-    if (!address) return '';
-
-    const withoutZip = address
-        .replace(/\s+Chattanooga,\s*TN\s+\d{5}(?:-\d{4})?$/i, '')
-        .replace(/\s+\d{5}(?:-\d{4})?$/, '');
-
-    return withoutZip
-        .split(/\s+/)
-        .map((part) => {
-            const normalized = part.toLowerCase();
-            const abbreviations = new Set(['st', 'rd', 'ave', 'dr', 'ln', 'ct', 'pl', 'blvd']);
-            if (abbreviations.has(normalized)) {
-                return normalized.charAt(0).toUpperCase() + normalized.slice(1);
-            }
-            return part;
-        })
-        .join(' ');
-}
-
-function normalizeReadings(readings) {
-    if (!Array.isArray(readings)) return [];
-    return readings
-        .map((item) => ({
-            date: item.date,
-            consumption: Number(item.consumption) || 0,
-            time: parseDateTime(item.date),
-        }))
-        .filter((item) => item.date)
-        .sort((a, b) => a.time - b.time);
-}
-
-function parseDateTime(value) {
-    const parsed = new Date(value);
-    return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
-}
-
 function isSameAccount(a, b) {
     if (!a || !b) return false;
     if (a.accountKey && b.accountKey) return a.accountKey === b.accountKey;
@@ -958,59 +837,4 @@ function getAccountValue(account) {
 
 function isInactiveAccount(account) {
     return account?.statusType === 'inactive' || account?.pastInactive === true;
-}
-
-function formatCurrency(value) {
-    const number = Number(value);
-    const safeNumber = Number.isFinite(number) ? number : 0;
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-    }).format(safeNumber);
-}
-
-function formatOptionalCurrency(value) {
-    if (value === undefined || value === null || value === '') return '';
-    return formatCurrency(value);
-}
-
-function formatDate(value) {
-    if (!value) return '';
-    const parsed = new Date(value);
-    if (Number.isNaN(parsed.getTime())) return String(value);
-    return new Intl.DateTimeFormat('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    }).format(parsed);
-}
-
-function formatShortDate(value) {
-    if (!value) return '';
-    const parsed = new Date(value);
-    if (Number.isNaN(parsed.getTime())) return String(value);
-    return new Intl.DateTimeFormat('en-US', {
-        month: 'numeric',
-        day: 'numeric',
-        year: '2-digit',
-    }).format(parsed);
-}
-
-function formatNumber(value) {
-    return new Intl.NumberFormat('en-US', {
-        maximumFractionDigits: 0,
-    }).format(Number(value) || 0);
-}
-
-function escapeHtml(value) {
-    return String(value ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
-
-function escapeAttr(value) {
-    return escapeHtml(value);
 }

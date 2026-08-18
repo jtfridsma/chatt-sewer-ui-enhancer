@@ -32,12 +32,12 @@ export function setupLandingPageEnhancements(ctx) {
     if (hasToggleListener || typeof window === 'undefined') return;
 
     hasToggleListener = true;
-    window.addEventListener('csui-theme-toggle', (ev) => {
+    subscribeToThemeToggle((ev) => {
         syncLandingPageEnhancements(currentContext, !!ev?.detail?.enabled);
     });
 }
 
-export function applyLandingPageEnhancements(ctx) {
+function applyLandingPageEnhancements(ctx) {
     if (typeof document === 'undefined' || !document.body) return;
     if (!ctx?.isSewerPaymentsChatt) return;
 
@@ -50,7 +50,7 @@ export function applyLandingPageEnhancements(ctx) {
     restructureMainAndSidebar(mainBlock);
 }
 
-export function revertLandingPageEnhancements(ctx) {
+function revertLandingPageEnhancements(ctx) {
     if (typeof document === 'undefined') return;
     if (!ctx?.isSewerPaymentsChatt) return;
 
@@ -71,10 +71,6 @@ function syncLandingPageEnhancements(ctx, enabled = isThemeEnabled()) {
     } else {
         revertLandingPageEnhancements(ctx);
     }
-}
-
-function isThemeEnabled() {
-    return document.documentElement?.hasAttribute('data-csui-enabled') ?? false;
 }
 
 function linkifyContacts(rootEl) {
@@ -366,3 +362,4 @@ function findTextNodeMatch(container, phrase) {
 
     return null;
 }
+import { isThemeEnabled, subscribeToThemeToggle } from '../utilities/theme-state.js';

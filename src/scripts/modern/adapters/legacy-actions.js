@@ -1,22 +1,20 @@
+const ACTION_LABELS = {
+    openPayment: 'Pay Now',
+    openProfile: 'Update Profile',
+    openChangePassword: 'Change Password',
+    signOut: 'Sign Out',
+};
+
 export function createLegacyActions({ logger } = {}) {
-    return {
-        openPayment() {
-            logger?.log?.('delegating Pay Now to legacy application');
-            clickLegacyButton('Pay Now');
-        },
-        openProfile() {
-            logger?.log?.('delegating Update Profile to legacy application');
-            clickLegacyButton('Update Profile');
-        },
-        openChangePassword() {
-            logger?.log?.('delegating Change Password to legacy application');
-            clickLegacyButton('Change Password');
-        },
-        signOut() {
-            logger?.log?.('delegating Sign Out to legacy application');
-            clickLegacyButton('Sign Out');
-        },
-    };
+    return Object.fromEntries(
+        Object.entries(ACTION_LABELS).map(([action, label]) => [
+            action,
+            () => {
+                logger?.log?.(`delegating ${label} to legacy application`);
+                clickLegacyButton(label);
+            },
+        ])
+    );
 }
 
 function clickLegacyButton(label) {

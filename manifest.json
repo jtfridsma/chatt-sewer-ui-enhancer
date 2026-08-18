@@ -31,6 +31,10 @@
     {
       "resources": ["public/icons/*.png"],
       "matches": ["https://www.sewerpayments.com/*", "https://share.dwcorp.com/*"]
+    },
+    {
+      "resources": ["public/csui-consumption-chart.js"],
+      "matches": ["https://share.dwcorp.com/*"]
     }
   ]
 }

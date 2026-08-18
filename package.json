@@ -1,6 +1,7 @@
 {
   "name": "chatt-sewer-ui-enhancer",
   "version": "0.1.0",
+  "type": "module",
   "description": "Restyles the Chattanooga sewer payments portal and related dashboard to match the main Chattanooga.gov UI more closely.",
   "keywords": [],
   "author": "jtf",
@@ -13,8 +14,9 @@
     "dev:js": "node build.mjs --watch",
     "dev": "npm-run-all --parallel dev:css dev:js",
     "lint": "prettier --check .",
+    "test": "node --test",
     "format": "prettier --write .",
-    "prebuild": "npm run lint"
+    "prebuild": "npm run lint && npm test"
   },
   "devDependencies": {
     "esbuild": "^0.27.0",

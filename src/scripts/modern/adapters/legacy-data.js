@@ -14,8 +14,7 @@ export function createLegacyDataAdapter({ onState, onUnavailable, logger } = {})
         active = true;
         receivedState = false;
         window.addEventListener(MODERN_BRIDGE_EVENTS.state, handleState);
-        dispatch(MODERN_BRIDGE_EVENTS.start);
-        requestStateWithRetries();
+        startBridgeWithRetries();
 
         timeoutId = window.setTimeout(() => {
             if (!active || receivedState) return;
@@ -25,6 +24,7 @@ export function createLegacyDataAdapter({ onState, onUnavailable, logger } = {})
     }
 
     function stop() {
+        if (!active) return;
         active = false;
         if (timeoutId) window.clearTimeout(timeoutId);
         if (retryId) window.clearInterval(retryId);
@@ -71,11 +71,11 @@ export function createLegacyDataAdapter({ onState, onUnavailable, logger } = {})
         onState?.(detail);
     }
 
-    function requestStateWithRetries() {
-        dispatch(MODERN_BRIDGE_EVENTS.requestState);
+    function startBridgeWithRetries() {
+        dispatch(MODERN_BRIDGE_EVENTS.start);
         retryId = window.setInterval(() => {
             if (!active || receivedState) return;
-            dispatch(MODERN_BRIDGE_EVENTS.requestState);
+            dispatch(MODERN_BRIDGE_EVENTS.start);
         }, REQUEST_RETRY_MS);
     }
 

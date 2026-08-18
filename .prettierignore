@@ -2,6 +2,7 @@
 public/main.css
 public/main.js
 public/csui-modern-bridge.js
+public/csui-consumption-chart.js
 public/*.map
 
 # Ignore all icons and static assets

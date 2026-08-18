@@ -46,6 +46,8 @@ Notes:
 ├─ public/
 │  ├─ main.css
 │  ├─ main.js
+│  ├─ csui-modern-bridge.js
+│  ├─ csui-consumption-chart.js
 │  └─ icons/
 └─ src/
    ├─ styles/            # Sass source (tokens, base, components, templates)
@@ -61,9 +63,10 @@ Notes:
 - `npm run dev:css` — watch Sass
 - `npm run dev:js` — watch JS (esbuild)
 - `npm run lint` — Prettier check
+- `npm test` — runs focused unit and lifecycle tests with Node's test runner
 - `npm run format` — Prettier write
 
 Build toolchain:
 
-- esbuild (`build.mjs`) bundles `src/scripts/main.js`
+- esbuild (`build.mjs`) bundles the main content script, MAIN-world bridge, and lazy Chart.js module
 - Sass compiles `src/styles/main.scss`

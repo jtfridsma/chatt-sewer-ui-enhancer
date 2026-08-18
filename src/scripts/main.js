@@ -11,13 +11,18 @@ function init() {
 
         if (!ctx.isRelevant) return;
 
-        applyThemeClasses(ctx);
         addThemeToggle();
+        applyThemeClasses(ctx);
         setupModernDashboardIntegration(ctx);
     } catch (err) {
-        // Fail silently in production so we don't break the host page.
-        // Uncomment for dev:
-        // console.warn('[Chatt Sewer UI] init failed:', err);
+        window.__CSUI__?.reportError?.(err);
+        try {
+            if (localStorage.getItem('csui-modern-debug') === 'true') {
+                console.warn('[Chatt Sewer UI] initialization failed:', err);
+            }
+        } catch {
+            // Keep host-page initialization failures isolated.
+        }
     }
 }
 

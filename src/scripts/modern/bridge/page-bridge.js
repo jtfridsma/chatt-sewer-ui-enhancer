@@ -1,17 +1,14 @@
 // Runs in the page's MAIN world so it can read AngularJS scope data.
 // Do not add chrome.* access or privileged extension behavior here.
 
-const EVENTS = {
-    start: 'csui-modern-dashboard:start',
-    stop: 'csui-modern-dashboard:stop',
-    requestState: 'csui-modern-dashboard:request-state',
-    state: 'csui-modern-dashboard:state',
-    selectAccount: 'csui-modern-dashboard:select-account',
-    legacyAction: 'csui-modern-dashboard:legacy-action',
-};
+import { MODERN_BRIDGE_EVENTS as EVENTS } from './events.js';
+import { normalizeAccount, normalizeMeterSeries, stringValue } from './normalize-data.js';
+import { formatStatementLabel, parseStatementDate, parseStatementKey } from './statement-data.js';
 
 const BRIDGE_KEY = '__CSUIModernDashboardBridge__';
 const POLL_MS = 800;
+const FALLBACK_DELAY_MS = 500;
+const MAX_FALLBACK_ATTEMPTS = 3;
 
 if (!window[BRIDGE_KEY]) {
     window[BRIDGE_KEY] = installBridge();
@@ -21,6 +18,7 @@ function installBridge() {
     let active = false;
     let timer = null;
     let lastStateJson = '';
+    const followUpTimeoutIds = new Set();
     const fallbackData = createFallbackDataStore();
 
     function start() {
@@ -38,9 +36,14 @@ function installBridge() {
             window.clearInterval(timer);
             timer = null;
         }
+        followUpTimeoutIds.forEach((id) => window.clearTimeout(id));
+        followUpTimeoutIds.clear();
+        fallbackData.scheduled.forEach((id) => window.clearTimeout(id));
+        fallbackData.scheduled.clear();
     }
 
     function requestState() {
+        if (!active) return;
         publishState({ force: true });
     }
 
@@ -157,7 +160,11 @@ function installBridge() {
 
     function scheduleFollowUpPublishes() {
         [0, 350, 800, 1600, 3000, 5000].forEach((delay) => {
-            window.setTimeout(() => publishState({ force: true }), delay);
+            const timeoutId = window.setTimeout(() => {
+                followUpTimeoutIds.delete(timeoutId);
+                if (active) publishState({ force: true });
+            }, delay);
+            followUpTimeoutIds.add(timeoutId);
         });
     }
 
@@ -173,7 +180,7 @@ function installBridge() {
         if (scope.showWaterConsumptionGraph === false) return;
 
         if (!store.waterMetersByAccount.has(accountKey)) {
-            requestWaterMeters(selectedRaw, accountKey, scope.maxNumberOfMeters, store);
+            requestWaterMeters(scope, selectedRaw, accountKey, scope.maxNumberOfMeters, store);
         }
     }
 
@@ -202,13 +209,16 @@ function createFallbackDataStore() {
         waterMetersByAccount: new Map(),
         waterMeterCountsByAccount: new Map(),
         pending: new Set(),
-        attempted: new Set(),
+        scheduled: new Map(),
+        availableFromAngular: new Set(),
+        failedAttempts: new Map(),
+        retryAfter: new Map(),
     };
 }
 
 function requestStatements(scope, account, accountKey, store) {
     const requestKey = `statements:${accountKey}`;
-    if (store.pending.has(requestKey) || store.attempted.has(requestKey)) return;
+    if (!canScheduleFallback(store, requestKey)) return;
 
     try {
         if (typeof scope.getStatementData === 'function') {
@@ -218,60 +228,102 @@ function requestStatements(scope, account, accountKey, store) {
         // The fetch fallback below is intentionally independent of Angular's promise chain.
     }
 
-    runFallbackRequest(store, requestKey, async () => {
-        const items = await fetchSearchArray([
-            ['format', 'json'],
-            ['viewID', '4'],
-            ['PremiseID', account.PTntPremiseID],
-            ['TenantCounter', account.PTntTenantCounter],
-            ['clientID', getClientID()],
-            ['clientID2', getClientID()],
-            ['NumberOfStatements', scope.numberOfExpandedStatements || 20],
-        ]);
-        store.statementsByAccount.set(accountKey, items);
-    });
+    scheduleFallbackRequest(
+        store,
+        requestKey,
+        () => hasCurrentAccountData(scope, accountKey, 'statements'),
+        async () => {
+            const items = await fetchSearchArray([
+                ['format', 'json'],
+                ['viewID', '4'],
+                ['PremiseID', account.PTntPremiseID],
+                ['TenantCounter', account.PTntTenantCounter],
+                ['clientID', getClientID()],
+                ['clientID2', getClientID()],
+                ['NumberOfStatements', scope.numberOfExpandedStatements || 20],
+            ]);
+            store.statementsByAccount.set(accountKey, items);
+        }
+    );
 }
 
-function requestWaterMeters(account, accountKey, maxMeters, store) {
-    runFallbackRequest(store, `water-meters:${accountKey}`, async () => {
-        const meters = await fetchSearchArray([
-            ['format', 'json'],
-            ['viewID', '5'],
-            ['PremiseID', account.PTntPremiseID],
-            ['clientID', getClientID()],
-            ['MeterKind', 1],
-        ]);
-        const limit = getMeterFetchLimit(meters, maxMeters);
-        store.waterMeterCountsByAccount.set(accountKey, limit);
+function requestWaterMeters(scope, account, accountKey, maxMeters, store) {
+    const requestKey = `water-meters:${accountKey}`;
+    if (!canScheduleFallback(store, requestKey)) return;
 
-        const series = await Promise.all(
-            meters.slice(0, limit).map(async (meter) => {
-                const readings = await fetchSearchArray([
-                    ['format', 'json'],
-                    ['viewID', '6'],
-                    ['PremiseID', account.PTntPremiseID],
-                    ['TenantCounter', account.PTntTenantCounter],
-                    ['MeterID', meter.MetrMeterID],
-                    ['NumberOfReads', getNumberOfReadsToDisplay()],
-                    ['clientID', getClientID()],
-                ]);
-                return createFallbackMeterSeries(meter, meters, readings);
-            })
-        );
+    scheduleFallbackRequest(
+        store,
+        requestKey,
+        () => hasCurrentAccountData(scope, accountKey, 'waterMeterData'),
+        async () => {
+            const meters = await fetchSearchArray([
+                ['format', 'json'],
+                ['viewID', '5'],
+                ['PremiseID', account.PTntPremiseID],
+                ['clientID', getClientID()],
+                ['MeterKind', 1],
+            ]);
+            const limit = getMeterFetchLimit(meters, maxMeters);
+            store.waterMeterCountsByAccount.set(accountKey, limit);
 
-        store.waterMetersByAccount.set(accountKey, series.filter(Boolean));
-    });
+            const series = await Promise.all(
+                meters.slice(0, limit).map(async (meter) => {
+                    const readings = await fetchSearchArray([
+                        ['format', 'json'],
+                        ['viewID', '6'],
+                        ['PremiseID', account.PTntPremiseID],
+                        ['TenantCounter', account.PTntTenantCounter],
+                        ['MeterID', meter.MetrMeterID],
+                        ['NumberOfReads', getNumberOfReadsToDisplay()],
+                        ['clientID', getClientID()],
+                    ]);
+                    return createFallbackMeterSeries(meter, meters, readings);
+                })
+            );
+
+            store.waterMetersByAccount.set(accountKey, series.filter(Boolean));
+        }
+    );
+}
+
+function canScheduleFallback(store, key) {
+    if (store.pending.has(key) || store.scheduled.has(key)) return false;
+    if (store.availableFromAngular.has(key)) return false;
+    if ((store.failedAttempts.get(key) || 0) >= MAX_FALLBACK_ATTEMPTS) return false;
+    return Date.now() >= (store.retryAfter.get(key) || 0);
+}
+
+function scheduleFallbackRequest(store, key, hasAngularData, task) {
+    const timeoutId = window.setTimeout(() => {
+        store.scheduled.delete(key);
+        if (hasAngularData()) {
+            store.availableFromAngular.add(key);
+            return;
+        }
+        runFallbackRequest(store, key, task);
+    }, FALLBACK_DELAY_MS);
+    store.scheduled.set(key, timeoutId);
+}
+
+function hasCurrentAccountData(scope, accountKey, property) {
+    if (getRawAccountKey(getSelectedRawAccount(scope)) !== accountKey) return false;
+    return Array.isArray(scope[property]) && scope[property].length > 0;
 }
 
 function runFallbackRequest(store, key, task) {
-    if (store.pending.has(key) || store.attempted.has(key)) return;
+    if (store.pending.has(key)) return;
     store.pending.add(key);
-    store.attempted.add(key);
 
     Promise.resolve()
         .then(task)
+        .then(() => {
+            store.failedAttempts.delete(key);
+            store.retryAfter.delete(key);
+        })
         .catch(() => {
-            // The modern client can continue with Angular or DOM-derived state.
+            const failures = (store.failedAttempts.get(key) || 0) + 1;
+            store.failedAttempts.set(key, failures);
+            store.retryAfter.set(key, Date.now() + 1000 * 2 ** (failures - 1));
         })
         .finally(() => {
             store.pending.delete(key);
@@ -449,65 +501,6 @@ function getRawAccountKey(raw) {
     );
 }
 
-function normalizeAccount(raw) {
-    if (!raw || typeof raw !== 'object') return null;
-    const currentBalance = numberValue(raw.PTntvfBalance);
-    const totalAmountDue = numberValue(raw.TotalAmtDue ?? raw.AmtToPay ?? raw.PTntvfBalance);
-    const lastPaymentDate = stringValue(raw.LastPayDate);
-    const explicitInactive = raw.PTntActive === 0 || raw.PTntActive === '0';
-    const lastPaymentIsVeryOld = isVeryOldDate(lastPaymentDate);
-    const isPastInactive =
-        explicitInactive || (currentBalance === 0 && totalAmountDue === 0 && lastPaymentIsVeryOld);
-    const pastDueAmount = optionalNumber(
-        raw.PastDueAmount ??
-            raw.PastDue ??
-            raw.PastDueAmt ??
-            raw.PTntPastDue ??
-            raw.PTntPastDueAmt ??
-            raw.PastDueBalance ??
-            raw.DelqBalance ??
-            raw.DelinquentAmount
-    );
-    const explicitPastDue =
-        booleanValue(raw.PastDue) ||
-        booleanValue(raw.IsPastDue) ||
-        booleanValue(raw.Delinq) ||
-        booleanValue(raw.Delinquent) ||
-        booleanValue(raw.PTntDelinquent) ||
-        (pastDueAmount ?? 0) > 0;
-    const status = getAccountStatus({
-        isPastInactive,
-        explicitPastDue,
-        hasPaymentDue: totalAmountDue > 0,
-    });
-
-    return {
-        accountNumber: stringValue(raw.PTntvfFmtPremTenant),
-        serviceAddress: stringValue(raw.ServiceAddress || raw.AddrvfFullAddress),
-        name: stringValue(raw.NamevfFirstLast),
-        currentBalance,
-        totalAmountDue,
-        lastPaymentAmount: optionalNumber(raw.LastPayAmt),
-        lastPaymentDate,
-        lastStatementBalance: optionalNumber(raw.PTntPrevBalance),
-        paperlessBilling: booleanValue(raw.NameEBillConsent),
-        autoPay: booleanValue(raw.AutoPay),
-        active: !explicitInactive,
-        pastInactive: isPastInactive,
-        statusType: status.type,
-        statusLabel: status.label,
-        statusReason: getAccountStatusReason({
-            explicitInactive,
-            lastPaymentIsVeryOld,
-            explicitPastDue,
-            hasPaymentDue: totalAmountDue > 0,
-        }),
-        premiseId: stringValue(raw.PTntPremiseID),
-        tenantCounter: stringValue(raw.PTntTenantCounter),
-        accountKey: stringValue(raw.PNALKey),
-    };
-}
-
 function normalizeStatements(rawStatements) {
     if (!Array.isArray(rawStatements)) return [];
 
@@ -581,23 +574,6 @@ function getStatementKey(item) {
     return '';
 }
 
-function parseStatementKey(value) {
-    const text = stringValue(value);
-    if (!text) return '';
-    if (/^\d+$/.test(text)) return text;
-
-    const decoded = safeDecodeURIComponent(text);
-    const keyMatch = decoded.match(/[?&]StmtKey=([^&]+)/i) || decoded.match(/\bStmtKey=([^&]+)/i);
-    if (keyMatch) return safeDecodeURIComponent(keyMatch[1]);
-
-    try {
-        const url = new URL(decoded, window.location.href);
-        return stringValue(url.searchParams.get('StmtKey'));
-    } catch {
-        return '';
-    }
-}
-
 function getStatementUrl(item, statementKey) {
     if (statementKey) {
         return `StatementView.aspx?StmtKey=${encodeURIComponent(statementKey)}&clientKey=${encodeURIComponent(
@@ -637,93 +613,6 @@ function isStatementUrl(value) {
     return /StatementView\.aspx|StmtKey=/i.test(stringValue(value));
 }
 
-function formatStatementLabel(value) {
-    const parsedDate = parseStatementDate(value);
-    if (!parsedDate) return stringValue(value) || 'Statement';
-    return `${formatStatementDate(parsedDate)} Statement`;
-}
-
-function parseStatementDate(value) {
-    const text = stringValue(value);
-    if (!text) return null;
-
-    const fullYearMatch = text.match(/\b(20\d{2})[-/](\d{1,2})[-/](\d{1,2})\b/);
-    if (fullYearMatch) {
-        return createStatementDate(fullYearMatch[1], fullYearMatch[2], fullYearMatch[3]);
-    }
-
-    const fullYearCompactMatch = text.match(/\b(20\d{2})[-/](\d{2})(\d{2})\b/);
-    if (fullYearCompactMatch) {
-        return createStatementDate(
-            fullYearCompactMatch[1],
-            fullYearCompactMatch[2],
-            fullYearCompactMatch[3]
-        );
-    }
-
-    const compactMatch = text.match(/\b(\d{2})(\d{2})(\d{2})\b/);
-    if (compactMatch) {
-        return createStatementDate(`20${compactMatch[1]}`, compactMatch[2], compactMatch[3]);
-    }
-
-    return null;
-}
-
-function safeDecodeURIComponent(value) {
-    try {
-        return decodeURIComponent(value);
-    } catch {
-        return stringValue(value);
-    }
-}
-
-function createStatementDate(year, month, day) {
-    const date = new Date(Number(year), Number(month) - 1, Number(day));
-    if (
-        Number.isNaN(date.getTime()) ||
-        date.getFullYear() !== Number(year) ||
-        date.getMonth() !== Number(month) - 1 ||
-        date.getDate() !== Number(day)
-    ) {
-        return null;
-    }
-    return date;
-}
-
-function formatStatementDate(date) {
-    return new Intl.DateTimeFormat('en-US', {
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-    }).format(date);
-}
-
-function normalizeMeterSeries(rawSeries) {
-    if (!Array.isArray(rawSeries)) return [];
-
-    return rawSeries
-        .map((series) => {
-            const values = Array.isArray(series?.values) ? series.values : [];
-            const readings = values
-                .map((reading) => ({
-                    date: stringValue(reading?.PMRdEndDate || reading?.date),
-                    consumption: numberValue(reading?.Consumption),
-                }))
-                .filter((reading) => reading.date || Number.isFinite(reading.consumption));
-
-            return {
-                meterNumber: stringValue(
-                    series?.meterNumber ||
-                        series?.key ||
-                        values[0]?.MetrMeterNumber ||
-                        values[0]?.MetrMeterID
-                ),
-                readings,
-            };
-        })
-        .filter((series) => series.meterNumber || series.readings.length);
-}
-
 function getExpectedMeterCount(rawMeters, maxMeters) {
     if (!Array.isArray(rawMeters)) return 0;
     const limit = Number(maxMeters);
@@ -757,61 +646,6 @@ function findPanelText(title) {
         const bodyText = stringValue(panel.querySelector('.panel-body')?.textContent);
         return bodyText === title ? '' : bodyText;
     }
-    return '';
-}
-
-function stringValue(value) {
-    if (value === null || value === undefined) return '';
-    return String(value).trim();
-}
-
-function numberValue(value) {
-    if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
-    if (value === null || value === undefined || value === '') return 0;
-    const parsed = Number(String(value).replace(/[$,]/g, ''));
-    return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function optionalNumber(value) {
-    if (value === null || value === undefined || value === '') return undefined;
-    return numberValue(value);
-}
-
-function booleanValue(value) {
-    return value === true || value === 1 || value === '1' || value === 'true';
-}
-
-function isVeryOldDate(value) {
-    const timestamp = parseDateTime(value);
-    if (!timestamp) return false;
-    const ageMs = Date.now() - timestamp;
-    const ageDays = ageMs / 86400000;
-    return ageDays > 548; // roughly 18 months
-}
-
-function parseDateTime(value) {
-    if (!value) return 0;
-    const parsed = new Date(value);
-    return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
-}
-
-function getAccountStatus({ isPastInactive, explicitPastDue, hasPaymentDue }) {
-    if (isPastInactive) return { type: 'inactive', label: 'Inactive' };
-    if (explicitPastDue) return { type: 'past-due', label: 'Payment past due' };
-    if (hasPaymentDue) return { type: 'due', label: 'Payment due' };
-    return { type: 'current', label: 'Current' };
-}
-
-function getAccountStatusReason({
-    explicitInactive,
-    lastPaymentIsVeryOld,
-    explicitPastDue,
-    hasPaymentDue,
-}) {
-    if (explicitInactive) return 'Portal marks this account inactive.';
-    if (lastPaymentIsVeryOld) return 'No balance and very old last payment date.';
-    if (explicitPastDue) return 'Portal indicates a past-due or delinquent amount.';
-    if (hasPaymentDue) return 'Amount due is greater than zero.';
     return '';
 }
 
