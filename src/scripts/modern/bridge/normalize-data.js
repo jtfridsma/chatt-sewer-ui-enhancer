@@ -5,6 +5,9 @@ export function normalizeAccount(raw) {
     const lastPaymentDate = stringValue(raw.LastPayDate);
     const explicitInactive = raw.PTntActive === 0 || raw.PTntActive === '0';
     const lastPaymentIsVeryOld = isVeryOldDate(lastPaymentDate);
+    // Product decision: low-activity, zero-due accounts are treated as inactive even when the
+    // portal does not explicitly mark them that way. The dashboard uses this to prioritize a
+    // more active default account; the UI discloses the inference on inactive account details.
     const isPastInactive =
         explicitInactive || (currentBalance === 0 && totalAmountDue === 0 && lastPaymentIsVeryOld);
     const pastDueAmount = optionalNumber(
@@ -43,6 +46,7 @@ export function normalizeAccount(raw) {
         autoPay: booleanValue(raw.AutoPay),
         active: !explicitInactive,
         pastInactive: isPastInactive,
+        inactiveStatusInferred: isPastInactive && !explicitInactive,
         statusType: status.type,
         statusLabel: status.label,
         statusReason: getAccountStatusReason({
@@ -81,6 +85,92 @@ export function normalizeMeterSeries(rawSeries) {
             };
         })
         .filter((series) => series.meterNumber || series.readings.length);
+}
+
+export function reconcileStatements(angularStatements, fallbackStatements) {
+    const merged = mergeCompleteCollections(
+        [angularStatements, fallbackStatements],
+        (statement) => statement?.statementKey || statement?.url || statement?.label
+    );
+    const angularByKey = indexByKey(
+        angularStatements,
+        (statement) => statement?.statementKey || statement?.url || statement?.label
+    );
+
+    return merged.map((statement) => {
+        const key = statement?.statementKey || statement?.url || statement?.label;
+        return angularByKey.get(String(key || '')) || statement;
+    });
+}
+
+export function reconcileMeterSeries(angularMeters, fallbackMeters) {
+    const getMeterKey = (meter) => meter?.meterNumber;
+    const merged = mergeCompleteCollections([angularMeters, fallbackMeters], getMeterKey);
+    const angularByMeter = indexByKey(angularMeters, getMeterKey);
+    const fallbackByMeter = indexByKey(fallbackMeters, getMeterKey);
+
+    return merged.map((meter) => {
+        const key = String(getMeterKey(meter) || '');
+        const angularMeter = angularByMeter.get(key);
+        const fallbackMeter = fallbackByMeter.get(key);
+        const readings = mergeCompleteCollections(
+            [angularMeter?.readings, fallbackMeter?.readings],
+            (reading) => reading?.date
+        );
+        const angularReadingsByDate = indexByKey(
+            angularMeter?.readings,
+            (reading) => reading?.date
+        );
+
+        return {
+            ...(fallbackMeter || {}),
+            ...(angularMeter || {}),
+            readings: readings.map(
+                (reading) => angularReadingsByDate.get(String(reading?.date || '')) || reading
+            ),
+        };
+    });
+}
+
+function indexByKey(collection, getKey) {
+    return new Map(
+        (Array.isArray(collection) ? collection : [])
+            .map((item) => [String(getKey(item) || ''), item])
+            .filter(([key]) => key)
+    );
+}
+
+function mergeCompleteCollections(collections, getKey, chooseItem = (current) => current) {
+    const available = collections.filter(Array.isArray);
+    const base = available.reduce(
+        (best, collection) => (collection.length > best.length ? collection : best),
+        []
+    );
+    const orderedSources = [base, ...available.filter((collection) => collection !== base)];
+    const merged = [];
+    const indexesByKey = new Map();
+
+    orderedSources.forEach((collection) => {
+        collection.forEach((item) => {
+            if (!item) return;
+            const key = String(getKey(item) || '');
+            if (!key) {
+                merged.push(item);
+                return;
+            }
+
+            const existingIndex = indexesByKey.get(key);
+            if (existingIndex === undefined) {
+                indexesByKey.set(key, merged.length);
+                merged.push(item);
+                return;
+            }
+
+            merged[existingIndex] = chooseItem(merged[existingIndex], item);
+        });
+    });
+
+    return merged;
 }
 
 export function stringValue(value) {
@@ -130,7 +220,8 @@ function getAccountStatusReason({
     hasPaymentDue,
 }) {
     if (explicitInactive) return 'Portal marks this account inactive.';
-    if (lastPaymentIsVeryOld) return 'No balance and very old last payment date.';
+    if (lastPaymentIsVeryOld)
+        return 'No balance or amount due and no payment for roughly 18 months.';
     if (explicitPastDue) return 'Portal indicates a past-due or delinquent amount.';
     if (hasPaymentDue) return 'Amount due is greater than zero.';
     return '';

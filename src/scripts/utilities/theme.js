@@ -1,8 +1,16 @@
 // src/scripts/theme.js
 import { setupLandingPageEnhancements } from '../templates/landing-page.js';
 import { setupWebShareEnhancements } from '../templates/webshare.js';
-import { applyPageChrome, applyWebShareChrome } from './chrome.js';
-import { readThemeEnabled, setThemeEnabled } from './theme-state.js';
+import {
+    applyPageChrome,
+    applyWebShareChrome,
+    captureOriginalPageChrome,
+    restorePageChrome,
+} from './chrome.js';
+import { readThemeEnabled, setThemeEnabled, subscribeToThemeToggle } from './theme-state.js';
+
+let currentChromeContext = null;
+let hasChromeToggleListener = false;
 
 export function applyThemeClasses(ctx) {
     if (!ctx?.isRelevant) return;
@@ -13,15 +21,15 @@ export function applyThemeClasses(ctx) {
 
     // Establish enabled/disabled state as early as possible so downstream scripts can rely on it.
     // Default is enabled unless explicitly set to "false".
-    ensureEnabledState();
+    const enabled = ensureEnabledState();
     ensureFontsLoaded();
+    setupPageChrome(ctx, enabled);
 
     root.classList.add('csui-theme');
 
     if (ctx.isSewerPaymentsChatt) {
         root.classList.add('csui-landing-page');
         setupLandingPageEnhancements(ctx);
-        applyPageChrome(ctx);
     }
 
     if (ctx.isChattWebShare) {
@@ -46,19 +54,44 @@ export function applyThemeClasses(ctx) {
                 break;
         }
 
-        applyWebShareChrome(ctx);
         addWebShareHeading(ctx);
         setupWebShareEnhancements(ctx);
     }
 }
 
 function ensureEnabledState() {
-    setThemeEnabled(readThemeEnabled());
+    const enabled = readThemeEnabled();
+    setThemeEnabled(enabled);
+    return enabled;
+}
+
+function setupPageChrome(ctx, enabled) {
+    currentChromeContext = ctx;
+    captureOriginalPageChrome();
+    syncPageChrome(ctx, enabled);
+
+    if (hasChromeToggleListener || typeof window === 'undefined') return;
+
+    hasChromeToggleListener = true;
+    subscribeToThemeToggle((event) => {
+        syncPageChrome(currentChromeContext, !!event?.detail?.enabled);
+    });
+}
+
+function syncPageChrome(ctx, enabled) {
+    if (!enabled) {
+        restorePageChrome();
+        return;
+    }
+
+    if (ctx?.isSewerPaymentsChatt) applyPageChrome(ctx);
+    if (ctx?.isChattWebShare) applyWebShareChrome(ctx);
 }
 
 function ensureFontsLoaded() {
     // Best-effort: inject Google Fonts stylesheet once per page.
     // Note: host-page CSP may block external font loads; in that case fallbacks will be used.
+    // These resource hints/stylesheets intentionally remain loaded when the visual theme is off.
     if (typeof document === 'undefined') return;
 
     const head = document.head || document.getElementsByTagName('head')[0];
@@ -83,7 +116,7 @@ function ensureFontsLoaded() {
     ensureHeadLink(head, {
         id: 'csui-google-symbols',
         rel: 'stylesheet',
-        href: 'https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded&icon_names=account_circle,autorenew,block,check_circle,close,description,edit_note,gas_meter,keyboard_arrow_down,lock,logout,payments,receipt_long,warning&display=block',
+        href: 'https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded&icon_names=account_circle,autorenew,block,check_circle,close,description,edit_note,gas_meter,info,keyboard_arrow_down,lock,logout,payments,receipt_long,warning&display=block',
     });
 }
 

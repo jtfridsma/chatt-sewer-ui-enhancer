@@ -375,6 +375,73 @@ export const DASHBOARD_STYLES = `
             font-weight: 400;
         }
 
+        .account-status-label {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            min-height: 1.75rem;
+        }
+
+        .account-status-info {
+            position: relative;
+            display: inline-grid;
+            place-items: center;
+            width: 1.75rem;
+            height: 1.75rem;
+            padding: 0;
+            border: 0;
+            border-radius: 999px;
+            color: var(--dashboard-text-muted);
+            background: transparent;
+            cursor: help;
+        }
+
+        .account-status-info--placeholder {
+            visibility: hidden;
+        }
+
+        .account-status-info__icon {
+            font-size: 1rem;
+        }
+
+        .account-status-tooltip {
+            position: absolute;
+            z-index: 20;
+            bottom: calc(100% + 0.5rem);
+            left: 50%;
+            width: min(280px, 75vw);
+            padding: 0.65rem 0.75rem;
+            border-radius: 7px;
+            color: #ffffff;
+            background: #17313d;
+            box-shadow: 0 8px 24px rgba(19, 49, 61, 0.22);
+            font-size: 0.75rem;
+            font-weight: 500;
+            line-height: 1.4;
+            text-align: left;
+            white-space: normal;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transform: translate(-50%, 0.2rem);
+            transition:
+                opacity 120ms ease,
+                transform 120ms ease,
+                visibility 120ms ease;
+        }
+
+        .account-status-info:hover .account-status-tooltip,
+        .account-status-info:focus-visible .account-status-tooltip {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, 0);
+        }
+
+        .account-status-info:focus-visible {
+            outline: 3px solid #f3b233;
+            outline-offset: 2px;
+        }
+
         .account-overview__facts dd {
             margin: 0;
             color: var(--dashboard-text);

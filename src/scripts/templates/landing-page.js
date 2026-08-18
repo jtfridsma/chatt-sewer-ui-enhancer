@@ -8,8 +8,12 @@ const SIDEBAR_TITLE_ID = 'csui-sidebar-title';
 const LAYOUT_CLASS = 'csui-layout';
 const LAYOUT_MAIN_CLASS = 'csui-layout-main';
 
-const MAIN_TEXT_BLOCK_ID = 'block-yui_3_17_2_1_1559159472532_12338';
-const SERVICE_BLOCK_ID = 'block-c35f931c81b99d76a401';
+// Required Squarespace CMS integration contracts. These IDs are intentionally explicit:
+// semantic fallback could enhance the wrong content if the upstream page is edited.
+const REQUIRED_BLOCK_IDS = Object.freeze({
+    mainText: 'block-yui_3_17_2_1_1559159472532_12338',
+    service: 'block-c35f931c81b99d76a401',
+});
 
 const NOTICE_SNIPPET = 'NOTICE TO CUSTOMERS:';
 const NOTICE_CLASS = 'csui-notice';
@@ -24,6 +28,7 @@ const PHONE_NUMBERS = [
 
 let currentContext = null;
 let hasToggleListener = false;
+let hasReportedMissingBlocks = false;
 
 export function setupLandingPageEnhancements(ctx) {
     currentContext = ctx;
@@ -41,8 +46,10 @@ function applyLandingPageEnhancements(ctx) {
     if (typeof document === 'undefined' || !document.body) return;
     if (!ctx?.isSewerPaymentsChatt) return;
 
-    const mainBlock = document.getElementById(MAIN_TEXT_BLOCK_ID);
-    const serviceBlock = document.getElementById(SERVICE_BLOCK_ID);
+    const mainBlock = document.getElementById(REQUIRED_BLOCK_IDS.mainText);
+    const serviceBlock = document.getElementById(REQUIRED_BLOCK_IDS.service);
+
+    reportMissingRequiredBlocks({ mainBlock, serviceBlock });
 
     linkifyContacts(mainBlock);
     linkifyContacts(serviceBlock);
@@ -54,13 +61,28 @@ function revertLandingPageEnhancements(ctx) {
     if (typeof document === 'undefined') return;
     if (!ctx?.isSewerPaymentsChatt) return;
 
-    const mainBlock = document.getElementById(MAIN_TEXT_BLOCK_ID);
-    const serviceBlock = document.getElementById(SERVICE_BLOCK_ID);
+    const mainBlock = document.getElementById(REQUIRED_BLOCK_IDS.mainText);
+    const serviceBlock = document.getElementById(REQUIRED_BLOCK_IDS.service);
 
     teardownSidebarLayout(mainBlock);
     unwrapGeneratedContactLinks(mainBlock);
     unwrapGeneratedContactLinks(serviceBlock);
     clearGeneratedNoticeClasses(mainBlock);
+}
+
+function reportMissingRequiredBlocks({ mainBlock, serviceBlock }) {
+    if (hasReportedMissingBlocks) return;
+    if (typeof window === 'undefined') return;
+
+    const missingIds = [];
+    if (!mainBlock) missingIds.push(REQUIRED_BLOCK_IDS.mainText);
+    if (!serviceBlock) missingIds.push(REQUIRED_BLOCK_IDS.service);
+    if (!missingIds.length) return;
+
+    hasReportedMissingBlocks = true;
+    window.__CSUI__?.reportError?.(
+        new Error(`Required Squarespace block missing: ${missingIds.join(', ')}`)
+    );
 }
 
 function syncLandingPageEnhancements(ctx, enabled = isThemeEnabled()) {

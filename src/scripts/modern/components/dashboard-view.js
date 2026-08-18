@@ -23,7 +23,6 @@ export function createDashboardView({ host, actions }) {
     let currentAccountValue = '';
     let selectedWaterMeterKey = '';
     let selectedDetailTab = 'summary';
-    let statementsExpanded = false;
     let chartInstances = [];
     let detachActionMenuEvents = () => {};
     let sidebarLayoutFrame = null;
@@ -87,7 +86,6 @@ export function createDashboardView({ host, actions }) {
         if (accountValue !== currentAccountValue) {
             currentAccountValue = accountValue;
             selectedWaterMeterKey = '';
-            statementsExpanded = false;
         }
 
         content.innerHTML = `
@@ -101,7 +99,6 @@ export function createDashboardView({ host, actions }) {
                               selected,
                               selectedWaterMeterKey,
                               selectedDetailTab,
-                              statementsExpanded,
                           })
                         : `<section class="panel"><div class="empty">No account data is available.</div></section>`
                 }
@@ -139,7 +136,6 @@ export function createDashboardView({ host, actions }) {
         currentAccountValue = '';
         selectedWaterMeterKey = '';
         selectedDetailTab = 'summary';
-        statementsExpanded = false;
     }
 
     function destroyCharts() {
@@ -166,12 +162,6 @@ export function createDashboardView({ host, actions }) {
         const detailTab = event.target.closest('[data-detail-tab]');
         if (detailTab) {
             selectedDetailTab = detailTab.getAttribute('data-detail-tab') || 'summary';
-            if (currentState) render(currentState);
-            return;
-        }
-
-        if (event.target.closest('[data-statements-expand]')) {
-            statementsExpanded = true;
             if (currentState) render(currentState);
             return;
         }
@@ -311,7 +301,6 @@ function renderDashboardGrid({
     selected,
     selectedWaterMeterKey,
     selectedDetailTab,
-    statementsExpanded,
 }) {
     const flags = state.flags || {};
     const loading = state.loading || {};
@@ -335,7 +324,6 @@ function renderDashboardGrid({
                     waterMeters,
                     loading,
                     selectedDetailTab,
-                    statementsExpanded,
                     selectedWaterMeterKey,
                 })}
             </div>
@@ -418,7 +406,10 @@ function renderAccountOverview({ account, flags }) {
                         <dd>${escapeHtml(account.accountNumber || 'Account')}</dd>
                     </div>
                     <div>
-                        <dt>Account Status</dt>
+                        <dt class="account-status-label">
+                            <span>Account Status</span>
+                            ${renderInactiveStatusInfo(account)}
+                        </dt>
                         <dd>${renderStatusPill(account)}</dd>
                     </div>
                     <div>
@@ -454,7 +445,6 @@ function renderDetailTabs({
     waterMeters,
     loading,
     selectedDetailTab,
-    statementsExpanded,
     selectedWaterMeterKey,
 }) {
     const tabs = [
@@ -501,7 +491,6 @@ function renderDetailTabs({
                     messages,
                     waterMeters,
                     loading,
-                    statementsExpanded,
                     selectedWaterMeterKey,
                 })}
             </div>
@@ -517,15 +506,10 @@ function renderActiveDetailPanel({
     messages,
     waterMeters,
     loading,
-    statementsExpanded,
     selectedWaterMeterKey,
 }) {
     if (activeTab === 'statements') {
-        return renderStatementsPanel({
-            statements,
-            loading: loading.statements,
-            statementsExpanded,
-        });
+        return renderStatementsPanel({ statements, loading: loading.statements });
     }
     if (activeTab === 'messages') return renderMessagesPanel(messages);
     if (activeTab === 'billing') return renderBillingPanel({ selected, flags });
@@ -544,6 +528,30 @@ function renderStatusPill(account) {
             ${renderIcon(getStatusIconName(account), 'status-pill__icon')}
             ${escapeHtml(account.statusLabel || (account.pastInactive ? 'Inactive' : 'Current'))}
         </span>
+    `;
+}
+
+function renderInactiveStatusInfo(account) {
+    if (!isInactiveAccount(account)) {
+        return '<span class="account-status-info account-status-info--placeholder" aria-hidden="true"></span>';
+    }
+
+    const explanation = account.inactiveStatusInferred
+        ? 'Inactive account status inferred due to no balance or amount due and no payment activity for roughly 18 months.'
+        : 'Inactive account status provided by the payment portal.';
+
+    return `
+        <button
+            class="account-status-info"
+            type="button"
+            aria-label="About inactive account status"
+            aria-describedby="csui-modern-inactive-status-tooltip"
+        >
+            ${renderIcon('info', 'account-status-info__icon')}
+            <span id="csui-modern-inactive-status-tooltip" class="account-status-tooltip" role="tooltip">
+                ${escapeHtml(explanation)}
+            </span>
+        </button>
     `;
 }
 
@@ -582,10 +590,8 @@ function renderAccountSummaryTab({ account, waterMeters, flags, loading, selecte
     `;
 }
 
-function renderStatementsPanel({ statements, loading, statementsExpanded }) {
+function renderStatementsPanel({ statements, loading }) {
     const hasStatements = statements.length > 0;
-    const visibleStatements = statementsExpanded ? statements : statements.slice(0, 20);
-    const hasMore = statements.length > visibleStatements.length;
 
     return `
         <div class="tab-list-panel">
@@ -593,13 +599,8 @@ function renderStatementsPanel({ statements, loading, statementsExpanded }) {
                 loading
                     ? renderInlineLoading('Loading statement history...')
                     : hasStatements
-                      ? `<ul class="statement-list">${visibleStatements.map(renderStatement).join('')}</ul>`
+                      ? `<ul class="statement-list">${statements.map(renderStatement).join('')}</ul>`
                       : `<p class="empty-inline">No statements are available for this account.</p>`
-            }
-            ${
-                !loading && hasMore
-                    ? `<div class="panel-actions"><button class="text-action" type="button" data-statements-expand>More</button></div>`
-                    : ''
             }
         </div>
     `;

@@ -45,12 +45,6 @@ function initializeModernDashboard() {
             setAutoPay(enabled) {
                 dataAdapter.performLegacyAction('set-auto-pay', { enabled });
             },
-            showAllStatements() {
-                dataAdapter.performLegacyAction('show-all-statements');
-            },
-            showInitialStatements() {
-                dataAdapter.performLegacyAction('show-initial-statements');
-            },
             openPayment() {
                 try {
                     legacyActions.openPayment();
@@ -265,6 +259,8 @@ function setModernDashboardReady(ready) {
 function getDefaultAccount(state) {
     const accounts = Array.isArray(state?.accounts) ? state.accounts : [];
     const selected = state?.selectedAccount;
+    // Intentional product behavior: `pastInactive` includes the documented zero-due/low-activity
+    // inference. Prefer a more active account on initial load so likely payment work is foregrounded.
     const preferred = accounts.find((account) => account && !account.pastInactive);
 
     if (!preferred) return null;

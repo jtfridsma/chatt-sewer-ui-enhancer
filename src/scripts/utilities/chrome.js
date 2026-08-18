@@ -3,7 +3,11 @@
 // Browser chrome tweaks (title + favicon) for supported pages.
 
 const BASE_TITLE = 'Chattanooga Sewer Payment Portal';
+const OWNED_FAVICON_ATTR = 'data-csui-owned-favicon';
+const FAVICON_IDS = ['csui-favicon-16', 'csui-favicon-32', 'csui-favicon-shortcut'];
+
 let baseFaviconApplied = false;
+let originalDocumentTitle;
 
 export function getExtensionUrl(path) {
     try {
@@ -45,14 +49,21 @@ function upsertFaviconLink({ id, rel = 'icon', href, sizes, type = 'image/png' }
 
     link.rel = rel;
     link.type = type;
+    link.setAttribute(OWNED_FAVICON_ATTR, 'true');
     if (sizes) link.sizes = sizes;
     link.href = href;
+}
+
+export function captureOriginalPageChrome() {
+    if (typeof document === 'undefined') return;
+    if (originalDocumentTitle === undefined) originalDocumentTitle = document.title;
 }
 
 export function applyWebShareChrome(ctx, opts = {}) {
     if (typeof document === 'undefined') return;
     if (!ctx?.isChattWebShare) return;
 
+    captureOriginalPageChrome();
     applyBaseFaviconOnce();
 
     const suffix = opts.titleSuffix ?? getWebShareTitleSuffix(ctx);
@@ -63,9 +74,27 @@ export function applyPageChrome(ctx) {
     if (typeof document === 'undefined') return;
     if (!ctx?.isSewerPaymentsChatt) return;
 
+    captureOriginalPageChrome();
+
     // Landing page: base title only, no suffix.
     applyBaseFaviconOnce();
     setDocumentTitle({ baseTitle: BASE_TITLE, suffix: null });
+}
+
+export function restorePageChrome() {
+    if (typeof document === 'undefined') return;
+
+    if (originalDocumentTitle !== undefined && document.title !== originalDocumentTitle) {
+        document.title = originalDocumentTitle;
+    }
+    originalDocumentTitle = undefined;
+
+    FAVICON_IDS.forEach((id) => {
+        const link = document.getElementById(id);
+        if (link?.getAttribute(OWNED_FAVICON_ATTR) === 'true') link.remove();
+    });
+
+    baseFaviconApplied = false;
 }
 
 function setDocumentTitle({ baseTitle, suffix, separator = ' — ' }) {

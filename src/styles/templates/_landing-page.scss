@@ -47,6 +47,8 @@ html[data-csui-enabled].csui-theme.csui-landing-page {
 
 // Styles specifically for https://www.sewerpayments.com/chattanooga
 // Scoped by .csui-landing-page (set on <html>) to avoid leakage.
+// The block IDs below are required Squarespace CMS integration contracts. Keep them aligned
+// with REQUIRED_BLOCK_IDS in src/scripts/templates/landing-page.js after upstream CMS edits.
 
 html.csui-theme.csui-landing-page[data-csui-enabled] {
     /* Utility */

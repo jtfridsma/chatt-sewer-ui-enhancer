@@ -2,12 +2,18 @@
 // Do not add chrome.* access or privileged extension behavior here.
 
 import { MODERN_BRIDGE_EVENTS as EVENTS } from './events.js';
-import { normalizeAccount, normalizeMeterSeries, stringValue } from './normalize-data.js';
+import {
+    normalizeAccount,
+    normalizeMeterSeries,
+    reconcileMeterSeries,
+    reconcileStatements,
+    stringValue,
+} from './normalize-data.js';
 import { formatStatementLabel, parseStatementDate, parseStatementKey } from './statement-data.js';
 
 const BRIDGE_KEY = '__CSUIModernDashboardBridge__';
 const POLL_MS = 800;
-const FALLBACK_DELAY_MS = 500;
+const FALLBACK_DELAY_MS = 2000;
 const MAX_FALLBACK_ATTEMPTS = 3;
 
 if (!window[BRIDGE_KEY]) {
@@ -141,15 +147,6 @@ function installBridge() {
                     scope.setAutoPayment?.();
                     return;
                 }
-
-                if (action === 'show-all-statements') {
-                    scope.getStatementData?.(true);
-                    return;
-                }
-
-                if (action === 'show-initial-statements') {
-                    scope.getStatementData?.(false);
-                }
             });
         } catch {
             // Legacy behavior owns the workflow; failures are surfaced by the isolated client timeout.
@@ -222,7 +219,9 @@ function requestStatements(scope, account, accountKey, store) {
 
     try {
         if (typeof scope.getStatementData === 'function') {
-            runInAngular(scope, () => scope.getStatementData(false));
+            // The modern dashboard renders the complete history, so request the legacy app's
+            // expanded collection up front instead of recreating its client-side "More" state.
+            runInAngular(scope, () => scope.getStatementData(true));
         }
     } catch {
         // The fetch fallback below is intentionally independent of Angular's promise chain.
@@ -431,11 +430,10 @@ function buildDashboardState(scope, fallbackData) {
     const fallbackStatements = normalizeStatements(
         fallbackData?.statementsByAccount?.get(selectedRawKey)
     );
-    const statements = hasFallbackStatements
-        ? fallbackStatements
-        : scopeStatements.length
-          ? scopeStatements
-          : normalizeStatementLinks();
+    const reconciledStatements = reconcileStatements(scopeStatements, fallbackStatements);
+    const statements = reconciledStatements.length
+        ? reconciledStatements
+        : normalizeStatementLinks();
 
     const scopeWaterMeters = normalizeMeterSeries(scope.waterMeterData);
     const hasFallbackWaterMeters =
@@ -443,7 +441,7 @@ function buildDashboardState(scope, fallbackData) {
     const fallbackWaterMeters = normalizeMeterSeries(
         fallbackData?.waterMetersByAccount?.get(selectedRawKey)
     );
-    const waterMeters = hasFallbackWaterMeters ? fallbackWaterMeters : scopeWaterMeters;
+    const waterMeters = reconcileMeterSeries(scopeWaterMeters, fallbackWaterMeters);
     const electricMeters = normalizeMeterSeries(scope.electricMeterData);
     const expectedWaterMeterCount = Math.max(
         getExpectedMeterCount(scope.waterMeters, scope.maxNumberOfMeters),
@@ -462,7 +460,6 @@ function buildDashboardState(scope, fallbackData) {
             showPaymentButton: scope.showPaymentButton === true,
             allowPaperlessChange: scope.allowPaperlessChange === true,
             allowRecurring: scope.allowRecurring === true,
-            moreStatementsShow: scope.moreStatementsShow === true,
             moreMeters: scope.moreMeters === true,
             expectedWaterMeterCount,
             showWaterConsumptionGraph: scope.showWaterConsumptionGraph === true,
@@ -478,12 +475,20 @@ function buildDashboardState(scope, fallbackData) {
             hasWaterMeterData: Array.isArray(scope.waterMeterData),
             waterMeterCount: waterMeters.length,
             expectedWaterMeterCount,
-            statementSource: hasFallbackStatements
-                ? 'fallback'
-                : scopeStatements.length
-                  ? 'angular'
-                  : 'dom',
-            waterMeterSource: hasFallbackWaterMeters ? 'fallback' : 'angular',
+            statementSource:
+                hasFallbackStatements && scopeStatements.length
+                    ? 'reconciled'
+                    : hasFallbackStatements
+                      ? 'fallback'
+                      : scopeStatements.length
+                        ? 'angular'
+                        : 'dom',
+            waterMeterSource:
+                hasFallbackWaterMeters && scopeWaterMeters.length
+                    ? 'reconciled'
+                    : hasFallbackWaterMeters
+                      ? 'fallback'
+                      : 'angular',
         },
     };
 }

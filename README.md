@@ -35,8 +35,23 @@ Notes:
 
 - Keep it plain JavaScript. No framework, no TypeScript, no runtime abstraction layer.
 - Prefer scoped CSS under `html.csui-theme` plus page-specific classes.
-- Content-script DOM changes should be idempotent and reversible when the enhancement toggle is turned off.
+- Visual and structural content-script changes should be idempotent and reversible when the enhancement toggle is turned off. Injected font resources may remain loaded.
 - Favor a few explicit modules over “reusable” infrastructure.
+
+### Squarespace block contracts
+
+The landing-page enhancements intentionally depend on specific Squarespace block IDs. They are
+required integration contracts, shared by the landing-page JavaScript and Sass, because a semantic
+fallback could modify the wrong content. If Squarespace regenerates them, the extension reports the
+missing blocks through its existing error indicator and leaves the affected host content unchanged.
+
+### Inactive account behavior
+
+The modern dashboard intentionally treats a zero-due account with no payment activity for roughly
+18 months as inactive, even when the portal does not explicitly mark it inactive. On initial load,
+the dashboard may select a more active account instead. This opinionated behavior is intended to
+foreground the account most likely to need payment activity; the account-status tooltip discloses
+when the inactive label was inferred.
 
 ## Project structure
 
