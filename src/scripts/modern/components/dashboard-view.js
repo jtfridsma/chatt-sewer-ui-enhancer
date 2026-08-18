@@ -16,6 +16,7 @@ import {
     renderIcon,
     renderSettingsToggles,
 } from './dashboard-fragments.js';
+import { replaceChildrenFromSanitizedMarkup } from './safe-dom.js';
 
 export function createDashboardView({ host, actions }) {
     const shadow = host.shadowRoot || host.attachShadow({ mode: 'open' });
@@ -65,13 +66,16 @@ export function createDashboardView({ host, actions }) {
         detachActionMenuEvents();
         detachActionMenuEvents = () => {};
         destroyCharts();
-        content.innerHTML = `
+        replaceChildrenFromSanitizedMarkup(
+            content,
+            `
             <main class="shell" aria-busy="true">
                 <section class="panel">
                     <div class="empty">${renderInlineLoading('Loading account dashboard...')}</div>
                 </section>
             </main>
-        `;
+        `
+        );
     }
 
     function render(state) {
@@ -88,7 +92,9 @@ export function createDashboardView({ host, actions }) {
             selectedWaterMeterKey = '';
         }
 
-        content.innerHTML = `
+        replaceChildrenFromSanitizedMarkup(
+            content,
+            `
             <main class="shell" aria-label="Account dashboard">
                 ${renderHeader()}
                 ${
@@ -103,7 +109,8 @@ export function createDashboardView({ host, actions }) {
                         : `<section class="panel"><div class="empty">No account data is available.</div></section>`
                 }
             </main>
-        `;
+        `
+        );
 
         bindEvents();
         restoreFocusTarget(focusTarget);
