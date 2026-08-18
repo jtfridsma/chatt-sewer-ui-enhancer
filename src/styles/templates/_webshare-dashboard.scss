@@ -4,6 +4,24 @@
 // off, these rules do not apply and the original Angular dashboard is revealed.
 
 html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-modern-dashboard {
+    --csui-dashboard-backdrop: #092f49;
+    --csui-dashboard-text: #172033;
+    --csui-dashboard-text-muted: #42596b;
+    --csui-dashboard-accent: #0f6684;
+    --csui-dashboard-primary: #0f4c6d;
+    --csui-dashboard-primary-border: #094162;
+    --csui-dashboard-primary-hover: #093c5a;
+    --csui-dashboard-danger: #8f1f17;
+    --csui-dashboard-border: #d9e2ea;
+    --csui-dashboard-input-border: #cbd8e1;
+    --csui-dashboard-row-border: #edf2f5;
+    --csui-dashboard-surface: #ffffff;
+    --csui-dashboard-surface-muted: #f6f9fb;
+    --csui-dashboard-surface-hover: #f7fbfd;
+    --csui-dashboard-focus: #f3b233;
+    --csui-dashboard-radius: 8px;
+    --csui-dashboard-modal-shadow: 0 24px 70px rgba(9, 47, 73, 0.28);
+
     body {
         display: block;
         gap: 0;
@@ -25,7 +43,7 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
     }
 
     .modal-backdrop {
-        background: #092f49;
+        background: var(--csui-dashboard-backdrop);
 
         &.in {
             opacity: 0.42;
@@ -33,7 +51,7 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
     }
 
     .modal {
-        color: #172033;
+        color: var(--csui-dashboard-text);
         font-family: var(--chatt-font-sans);
         letter-spacing: 0;
     }
@@ -54,10 +72,10 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
 
     .modal-content {
         overflow: hidden;
-        border: 1px solid #d9e2ea;
-        border-radius: 8px;
-        background: #ffffff;
-        box-shadow: 0 24px 70px rgba(9, 47, 73, 0.28);
+        border: 1px solid var(--csui-dashboard-border);
+        border-radius: var(--csui-dashboard-radius);
+        background: var(--csui-dashboard-surface);
+        box-shadow: var(--csui-dashboard-modal-shadow);
     }
 
     .modal-header {
@@ -68,8 +86,8 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
         gap: 1rem;
         min-height: 4.25rem;
         padding: 1rem 1.15rem;
-        border-bottom: 1px solid #d9e2ea;
-        background: #f6f9fb;
+        border-bottom: 1px solid var(--csui-dashboard-border);
+        background: var(--csui-dashboard-surface-muted);
         font-weight: 700;
     }
 
@@ -81,7 +99,7 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
         gap: 0.55rem;
         margin: 0;
         min-width: 0;
-        color: #092f49;
+        color: var(--csui-dashboard-backdrop);
         font-family: var(--chatt-font-heading);
         font-size: 1.15rem;
         font-weight: 700;
@@ -92,7 +110,7 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
         &::before {
             content: attr(data-csui-modal-icon);
             display: inline-flex;
-            color: #0f6684;
+            color: var(--csui-dashboard-accent);
             font-family: 'Material Symbols Rounded';
             font-feature-settings: 'liga';
             font-size: 1.35rem;
@@ -118,10 +136,10 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
         height: 2.25rem;
         margin: 0;
         padding: 0;
-        border: 1px solid #cbd8e1;
-        border-radius: 8px;
-        background: #ffffff;
-        color: #42596b;
+        border: 1px solid var(--csui-dashboard-input-border);
+        border-radius: var(--csui-dashboard-radius);
+        background: var(--csui-dashboard-surface);
+        color: var(--csui-dashboard-text-muted);
         cursor: pointer;
         font-size: 0;
         opacity: 1;
@@ -145,9 +163,9 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
         }
 
         &:hover {
-            border-color: #0f6684;
-            background: #f7fbfd;
-            color: #092f49;
+            border-color: var(--csui-dashboard-accent);
+            background: var(--csui-dashboard-surface-hover);
+            color: var(--csui-dashboard-backdrop);
         }
     }
 
@@ -167,7 +185,7 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
     .modal label {
         display: block;
         margin: 0 0 0.35rem;
-        color: #172033;
+        color: var(--csui-dashboard-text);
         font-size: 0.9rem;
         font-weight: 750;
         line-height: 1.35;
@@ -183,10 +201,10 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
         width: 100%;
         min-height: 2.75rem;
         padding: 0.66rem 0.75rem;
-        border: 1px solid #cbd8e1;
-        border-radius: 8px;
-        background: #ffffff;
-        color: #172033;
+        border: 1px solid var(--csui-dashboard-input-border);
+        border-radius: var(--csui-dashboard-radius);
+        background: var(--csui-dashboard-surface);
+        color: var(--csui-dashboard-text);
         font-family: var(--chatt-font-sans);
         font-size: 0.95rem;
         line-height: 1.4;
@@ -197,16 +215,16 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
 
         &:focus,
         &:focus-visible {
-            outline: 3px solid #f3b233;
+            outline: 3px solid var(--csui-dashboard-focus);
             outline-offset: 2px;
-            border-color: #0f6684;
+            border-color: var(--csui-dashboard-accent);
         }
     }
 
     .modal .help-block,
     .modal .has-error,
     .modal .text-danger {
-        color: #8f1f17;
+        color: var(--csui-dashboard-danger);
         font-size: 0.84rem;
         line-height: 1.4;
     }
@@ -216,16 +234,16 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
         border-collapse: separate;
         border-spacing: 0;
         overflow: hidden;
-        border: 1px solid #d9e2ea;
-        border-radius: 8px;
+        border: 1px solid var(--csui-dashboard-border);
+        border-radius: var(--csui-dashboard-radius);
         font-size: 0.9rem;
     }
 
     .modal th {
         padding: 0.7rem 0.8rem;
-        border-bottom: 1px solid #d9e2ea;
-        background: #f6f9fb;
-        color: #42596b;
+        border-bottom: 1px solid var(--csui-dashboard-border);
+        background: var(--csui-dashboard-surface-muted);
+        color: var(--csui-dashboard-text-muted);
         font-size: 0.76rem;
         font-weight: 850;
         text-align: left;
@@ -234,8 +252,8 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
 
     .modal td {
         padding: 0.75rem 0.8rem;
-        border-bottom: 1px solid #edf2f5;
-        color: #172033;
+        border-bottom: 1px solid var(--csui-dashboard-row-border);
+        color: var(--csui-dashboard-text);
         vertical-align: top;
     }
 
@@ -250,13 +268,13 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
         justify-content: flex-end;
         gap: 0.55rem;
         padding: 0.95rem 1.15rem;
-        border-top: 1px solid #d9e2ea;
-        background: #f6f9fb;
+        border-top: 1px solid var(--csui-dashboard-border);
+        background: var(--csui-dashboard-surface-muted);
         text-align: right;
 
         p {
             margin-right: auto;
-            color: #092f49;
+            color: var(--csui-dashboard-backdrop);
             font-weight: 800;
         }
     }
@@ -265,7 +283,7 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
         min-height: 2.5rem;
         margin: 0;
         padding: 0.62rem 0.9rem;
-        border-radius: 8px;
+        border-radius: var(--csui-dashboard-radius);
         clip-path: none;
         font-family: var(--chatt-font-sans);
         font-size: 0.9rem;
@@ -279,29 +297,29 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
     }
 
     .modal .btn-primary {
-        border-color: #094162;
-        background: #0f4c6d;
-        color: #ffffff;
+        border-color: var(--csui-dashboard-primary-border);
+        background: var(--csui-dashboard-primary);
+        color: var(--csui-dashboard-surface);
 
         &:hover,
         &:focus {
-            border-color: #093c5a;
-            background: #093c5a;
-            color: #ffffff;
+            border-color: var(--csui-dashboard-primary-hover);
+            background: var(--csui-dashboard-primary-hover);
+            color: var(--csui-dashboard-surface);
         }
     }
 
     .modal .btn-warning,
     .modal .btn-default {
-        border-color: #cbd8e1;
-        background: #ffffff;
-        color: #092f49;
+        border-color: var(--csui-dashboard-input-border);
+        background: var(--csui-dashboard-surface);
+        color: var(--csui-dashboard-backdrop);
 
         &:hover,
         &:focus {
-            border-color: #0f6684;
-            background: #f7fbfd;
-            color: #092f49;
+            border-color: var(--csui-dashboard-accent);
+            background: var(--csui-dashboard-surface-hover);
+            color: var(--csui-dashboard-backdrop);
         }
     }
 

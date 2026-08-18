@@ -1,0 +1,33 @@
+@use 'sass:color';
+@use '../settings/tokens';
+
+@mixin section-prompt {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+@mixin error-message($important-color: false) {
+    font-size: 0.875rem;
+    margin-top: 1rem !important;
+    margin-bottom: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding: 0.25rem 0.5rem;
+    text-align: center;
+    height: auto;
+    width: 100% !important;
+    background-color: color.adjust(tokens.$chatt-color-danger, $lightness: 50%);
+    border: 1px solid tokens.$chatt-color-danger;
+    border-radius: var(--chatt-radius-md);
+
+    @if $important-color {
+        color: tokens.$chatt-color-danger !important;
+    } @else {
+        color: tokens.$chatt-color-danger;
+    }
+
+    &:empty {
+        display: none;
+    }
+}

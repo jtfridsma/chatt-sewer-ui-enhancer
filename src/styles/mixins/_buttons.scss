@@ -1,8 +1,4 @@
-// Mixins for button styling
-@mixin button-base() {
-    background-color: var(--chatt-color-primary);
-    border-color: var(--chatt-color-primary);
-    color: white;
+@mixin button-base {
     background: none;
     background-image: none;
     clip-path: none;
@@ -27,13 +23,6 @@
     text-decoration: none;
     white-space: nowrap;
     transition: opacity var(--chatt-transition-fast);
-    // transition:
-    //     opacity var(--chatt-transition-fast),
-    //     background-color var(--chatt-transition-fast),
-    //     border-color var(--chatt-transition-fast),
-    //     box-shadow var(--chatt-transition-fast),
-    //     transform var(--chatt-transition-fast),
-    //     color var(--chatt-transition-fast);
 
     &:hover:not(:disabled):not(.disabled) {
         opacity: 0.7;
@@ -53,10 +42,9 @@
 }
 
 @mixin button($variant: primary) {
-    @include button-base();
+    @include button-base;
 
     @if $variant == primary {
-        // Chattanooga blue
         background-color: var(--chatt-color-primary);
         border-color: var(--chatt-color-primary);
         color: white;
@@ -65,21 +53,15 @@
             color: white;
         }
     } @else if $variant == gold {
-        // Chattanooga gold
         background-color: var(--chatt-color-accent);
         border-color: var(--chatt-color-accent);
         color: var(--chatt-color-text);
     } @else if $variant == secondary {
-        // Ghost/secondary style
-        // background-color: white;
-        // border-color: var(--chatt-color-border-subtle);
-        // color: var(--chatt-color-primary-dark);
         background-color: transparent;
         border-color: white;
         color: white;
         box-shadow: none;
     } @else if $variant == link {
-        // Link-style button
         background: none;
         background-color: transparent;
         border: none;
@@ -93,5 +75,7 @@
         font-size: 0.875rem;
         display: inline;
         cursor: pointer;
+    } @else {
+        @error "Unknown button variant: #{$variant}";
     }
 }

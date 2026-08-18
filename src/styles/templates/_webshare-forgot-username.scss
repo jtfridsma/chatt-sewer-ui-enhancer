@@ -1,6 +1,4 @@
-@use 'sass:color';
-@use '../utilities/tokens';
-@use '../mixins/buttons';
+@use '../mixins';
 
 // WebShare forgot username page
 html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-forgot-username {
@@ -22,16 +20,6 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-forgot-username {
             text-align: left;
             padding: 0 !important;
         }
-
-        // // Bring back these line breaks
-        // br:not(:first-of-type) {
-        //     display: inline-block;
-        // }
-
-        // // Apply margin between text and field
-        // .field {
-        //     margin-top: 0.25rem !important;
-        // }
     }
 
     // Email field
@@ -44,10 +32,7 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-forgot-username {
 
         // "Enter your email address to receive user name." label
         table tr:nth-of-type(2) td {
-            // TODO: abstract out this style to a mixin or other reusable place
-            font-size: 1.125rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
+            @include mixins.section-prompt;
         }
 
         #Main_Email {
@@ -87,19 +72,6 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-forgot-username {
             color: white;
             padding: 1rem;
         }
-
-        // display: flex;
-        // align-items: center;
-        // gap: 1rem;
-
-        // &::before,
-        // &::after {
-        //     content: '';
-        //     flex: 1;
-        //     height: 1px;
-        //     background-color: var(--chatt-color-border-subtle);
-        //     opacity: 0.25;
-        // }
     }
 
     // Username field
@@ -113,22 +85,9 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-forgot-username {
 
         // "Enter your User Name to change your password." label
         table table tr:first-of-type td {
-            font-size: 1.125rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
+            @include mixins.section-prompt;
         }
     }
-
-    // #loginarea {
-    //     & > div[align='center'] {
-    //         text-align: left;
-
-    //         & > div[align='center'] {
-    //             display: none;
-    //         }
-    //     }
-    // }
-
     #Main_EmailRequired,
     #Main_EmailValid,
     #Main_PasswordRecovery1_UserNameContainerID_UserNameRequired {
@@ -137,23 +96,7 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-forgot-username {
 
     // Error message
     .error_label {
-        font-size: 0.875rem;
-        margin-top: 1rem !important;
-        margin-bottom: 0 !important;
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-        padding: 0.25rem 0.5rem;
-        text-align: center;
-        height: auto;
-        width: 100% !important;
-        background-color: color.adjust(tokens.$chatt-color-danger, $lightness: 50%);
-        border: 1px solid tokens.$chatt-color-danger;
-        color: tokens.$chatt-color-danger;
-        border-radius: var(--chatt-radius-md);
-
-        &:empty {
-            display: none;
-        }
+        @include mixins.error-message;
     }
 
     // Button containers
@@ -165,6 +108,6 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-forgot-username {
 
     // Buttons
     #Main_PasswordRecovery1_UserNameContainerID_Button1 {
-        @include buttons.button(gold);
+        @include mixins.button(gold);
     }
 }

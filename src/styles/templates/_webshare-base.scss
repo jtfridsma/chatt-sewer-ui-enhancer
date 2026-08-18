@@ -1,7 +1,6 @@
-@use '../mixins/buttons';
-@use '../mixins/layout';
+@use '../mixins';
 
-// WebShare page common styles
+// Shared WebShare styles for the non-dashboard templates.
 html[data-csui-enabled].csui-theme.csui-webshare:not(.csui-webshare-dashboard) {
     --csui-input-focus-outline-color: var(--chatt-color-accent);
 
@@ -25,7 +24,7 @@ html[data-csui-enabled].csui-theme.csui-webshare:not(.csui-webshare-dashboard) {
 
     // Custom header section, injected by theme.js
     .csui-webshare-header {
-        @include layout.flex(column, 0.25rem);
+        @include mixins.flex(column, 0.25rem);
 
         text-align: center !important;
         margin-top: 1rem;
@@ -47,12 +46,6 @@ html[data-csui-enabled].csui-theme.csui-webshare:not(.csui-webshare-dashboard) {
         }
     }
 
-    // form:has(#loginarea) {
-    //     width: 100%;
-    //     max-width: 32rem;
-    //     // margin-inline: auto;
-    // }
-
     // Main container
     #loginarea {
         display: block;
@@ -71,12 +64,9 @@ html[data-csui-enabled].csui-theme.csui-webshare:not(.csui-webshare-dashboard) {
         box-shadow: var(--chatt-shadow-soft);
         height: auto;
 
-        // table {
-        //     display: grid;
-        // }
-
         @media (max-width: 35rem) {
-            min-width: calc(100vw - 1.5rem); // full width minus horizontal padding of body - hacky?
+            // Match the viewport width while accounting for the body's horizontal padding.
+            min-width: calc(100vw - 1.5rem);
             padding: 2rem 1rem;
         }
     }
@@ -95,7 +85,7 @@ html[data-csui-enabled].csui-theme.csui-webshare:not(.csui-webshare-dashboard) {
 
     // Button resets
     input[type='submit'] {
-        @include buttons.button(primary);
+        @include mixins.button(primary);
     }
 
     .footer {

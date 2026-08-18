@@ -132,8 +132,6 @@ html[data-csui-enabled].csui-theme {
     form textarea:focus-visible {
         outline: 2px solid var(--csui-input-focus-outline-color, var(--chatt-color-primary));
         outline-offset: 2px;
-        // border-color: var(--chatt-color-primary);
-        // box-shadow: 0 0 0 1px var(--chatt-color-primary);
     }
 
     // Error state (assuming a .has-error/.is-invalid wrapper or .error class)

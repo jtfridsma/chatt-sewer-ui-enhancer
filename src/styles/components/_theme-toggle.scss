@@ -1,33 +1,5 @@
-// html.csui-theme {
-//     .csui-control { /* fixed positioning container */ }
-//     .csui-control__launcher { /* circle icon button */ }
-//     .csui-control[data-csui-open] .csui-control__panel { /* show */ }
-//     .csui-control__panel { /* hidden by default */ }
-//     .csui-control__badge { /* hidden by default */ }
-//     .csui-control__badge[data-visible] { /* visible */ }
-//   }
-
-// src/styles/components/_csui-control.scss
-//
 // Floating CSUI control: circular launcher + popover panel.
-// Requires markup injected by src/scripts/toggle.js.
-//
-// Assumes CSS variables exist:
-// --chatt-font-sans
-// --chatt-color-primary
-// --chatt-color-primary-dark
-// --chatt-color-accent
-// --chatt-color-surface
-// --chatt-color-border-subtle
-// --chatt-color-text
-// --chatt-color-text-muted
-// --chatt-radius-md
-// --chatt-radius-lg
-// --chatt-shadow-soft
-// --chatt-transition-fast
-//
-
-// src/styles/components/_csui-control.scss
+// Requires markup injected by src/scripts/components/theme-toggle.js.
 
 html.csui-theme {
     .csui-control,
@@ -43,14 +15,6 @@ html.csui-theme {
         pointer-events: auto;
         user-select: none;
         display: block;
-        //         width: 44px;
-        //         height: 44px;
-        //         One small JS adjustment you’ll probably want
-
-        // Since we made the launcher position: absolute inside .csui-control, make sure .csui-control has a positioning context. In the SCSS above it’s already position: fixed;, which is fine. But you may want to ensure the control root has a predictable footprint.
-
-        // If you notice any weirdness, the simplest is to ensure .csui-control has a minimal size:
-
         @media (prefers-reduced-motion: reduce) {
             * {
                 transition: none !important;
@@ -154,7 +118,7 @@ html.csui-theme {
         transform: rotate(-30deg);
     }
 
-    // Optional: if you want the launcher bg to change when disabled
+    // Visually distinguish the disabled state.
     &:not([data-csui-enabled]) .csui-control__launcher {
         background-color: var(--chatt-color-text-muted);
     }
