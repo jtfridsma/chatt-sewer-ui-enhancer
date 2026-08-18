@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { createLegacyDataAdapter } from '../src/scripts/modern/adapters/legacy-data.js';
+import { MODERN_BRIDGE_EVENTS } from '../src/scripts/modern/bridge/events.js';
 import {
     isThemeEnabled,
     persistThemeEnabled,
@@ -116,3 +117,99 @@ test('legacy data adapter start and stop are idempotent', () => {
         globalThis.CustomEvent = originalCustomEvent;
     }
 });
+
+test('legacy data adapter times out only while valid state is still unavailable', () => {
+    const listeners = new Map();
+    const timeouts = new Map();
+    const intervals = new Map();
+    let nextTimerId = 1;
+    const originalWindow = globalThis.window;
+    const originalCustomEvent = globalThis.CustomEvent;
+
+    globalThis.CustomEvent = class CustomEvent {
+        constructor(type, options = {}) {
+            this.type = type;
+            this.detail = options.detail;
+        }
+    };
+    globalThis.window = {
+        addEventListener(type, listener) {
+            const entries = listeners.get(type) || [];
+            entries.push(listener);
+            listeners.set(type, entries);
+        },
+        removeEventListener(type, listener) {
+            listeners.set(
+                type,
+                (listeners.get(type) || []).filter((entry) => entry !== listener)
+            );
+        },
+        dispatchEvent(event) {
+            (listeners.get(event.type) || []).forEach((listener) => listener(event));
+        },
+        setTimeout(callback) {
+            const id = nextTimerId++;
+            timeouts.set(id, callback);
+            return id;
+        },
+        clearTimeout(id) {
+            timeouts.delete(id);
+        },
+        setInterval(callback) {
+            const id = nextTimerId++;
+            intervals.set(id, callback);
+            return id;
+        },
+        clearInterval(id) {
+            intervals.delete(id);
+        },
+    };
+
+    try {
+        let unavailableCount = 0;
+        const unavailableAdapter = createLegacyDataAdapter({
+            onUnavailable() {
+                unavailableCount += 1;
+            },
+        });
+        unavailableAdapter.start();
+        runPendingTimeouts(timeouts);
+        assert.equal(unavailableCount, 1);
+        unavailableAdapter.stop();
+
+        let receivedCount = 0;
+        const receivingAdapter = createLegacyDataAdapter({
+            onState() {
+                receivedCount += 1;
+            },
+            onUnavailable() {
+                unavailableCount += 1;
+            },
+        });
+        receivingAdapter.start();
+        window.dispatchEvent(new CustomEvent(MODERN_BRIDGE_EVENTS.state, { detail: { ok: true } }));
+        runPendingTimeouts(timeouts);
+        assert.equal(receivedCount, 1);
+        assert.equal(unavailableCount, 1);
+        receivingAdapter.stop();
+
+        const stoppedAdapter = createLegacyDataAdapter({
+            onUnavailable() {
+                unavailableCount += 1;
+            },
+        });
+        stoppedAdapter.start();
+        stoppedAdapter.stop();
+        runPendingTimeouts(timeouts);
+        assert.equal(unavailableCount, 1);
+    } finally {
+        globalThis.window = originalWindow;
+        globalThis.CustomEvent = originalCustomEvent;
+    }
+});
+
+function runPendingTimeouts(timeouts) {
+    const callbacks = [...timeouts.values()];
+    timeouts.clear();
+    callbacks.forEach((callback) => callback());
+}

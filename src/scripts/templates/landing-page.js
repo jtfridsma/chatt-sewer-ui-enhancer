@@ -207,7 +207,7 @@ function clearGeneratedNoticeClasses(mainBlock) {
 
     const notices = mainBlock.querySelectorAll(`[${GENERATED_ATTR}="${GENERATED_NOTICE}"]`);
     notices.forEach((notice) => {
-        notice.classList.remove(NOTICE_CLASS);
+        removeClassAndEmptyAttribute(notice, NOTICE_CLASS);
         notice.removeAttribute(GENERATED_ATTR);
     });
 }
@@ -280,7 +280,12 @@ function teardownSidebarLayout(mainBlock) {
     }
 
     const hiddenParagraphs = mainBlock.querySelectorAll('.csui-hidden');
-    hiddenParagraphs.forEach((paragraph) => paragraph.classList.remove('csui-hidden'));
+    hiddenParagraphs.forEach((paragraph) => removeClassAndEmptyAttribute(paragraph, 'csui-hidden'));
+}
+
+function removeClassAndEmptyAttribute(element, className) {
+    element.classList.remove(className);
+    if (!element.getAttribute('class')?.trim()) element.removeAttribute('class');
 }
 
 function trimSidebarNbsp(sidebarEl) {

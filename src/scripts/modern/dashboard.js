@@ -1,5 +1,6 @@
 import { createLegacyActions } from './adapters/legacy-actions.js';
 import { createLegacyDataAdapter } from './adapters/legacy-data.js';
+import { getDefaultAccount } from './account-selection.js';
 import { createDashboardView } from './components/dashboard-view.js';
 import { setupModernModalIntegration } from './modal-integration.js';
 import { isThemeEnabled, subscribeToThemeToggle } from '../utilities/theme-state.js';
@@ -254,19 +255,6 @@ function setModernDashboardReady(ready) {
         root.removeAttribute(MODERN_READY_ATTR);
         root.classList.remove(MODERN_CLASS);
     }
-}
-
-function getDefaultAccount(state) {
-    const accounts = Array.isArray(state?.accounts) ? state.accounts : [];
-    const selected = state?.selectedAccount;
-    // Intentional product behavior: `pastInactive` includes the documented zero-due/low-activity
-    // inference. Prefer a more active account on initial load so likely payment work is foregrounded.
-    const preferred = accounts.find((account) => account && !account.pastInactive);
-
-    if (!preferred) return null;
-    if (!selected) return preferred;
-    if (selected.pastInactive) return preferred;
-    return null;
 }
 
 function isSameAccount(a, b) {
