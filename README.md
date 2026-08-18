@@ -1,6 +1,6 @@
 # Chattanooga Sewer UI Enhancer
 
-Chrome extension that restyles the Chattanooga sewer payments portal (and related WebShare pages) to better match Chattanooga.gov, with improved accessibility and cleaner UI.
+A focused Chrome extension that transforms Chattanooga's legacy sewer payment portals into a clearer, more accessible experience—with a modern account dashboard, streamlined payment workflows, and enhancements that can be disabled at any time.
 
 ## What it does
 
