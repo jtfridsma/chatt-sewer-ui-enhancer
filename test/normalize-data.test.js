@@ -21,9 +21,27 @@ test('normalizes account balances and payment status', () => {
 
     assert.equal(account.accountNumber, '123-456');
     assert.equal(account.currentBalance, 1234.5);
-    assert.equal(account.totalAmountDue, 100.25);
+    assert.equal(account.totalAmountDue, 1234.5);
     assert.equal(account.paperlessBilling, true);
     assert.equal(account.statusType, 'due');
+});
+
+test('does not apply a customer-wide total due to a zero-balance account', () => {
+    const account = normalizeAccount({
+        PTntActive: 1,
+        PTntvfBalance: 0,
+        TotalAmtDue: 41.89,
+        LastPayDate: '2020-03-06',
+    });
+
+    assert.equal(account.currentBalance, 0);
+    assert.equal(account.totalAmountDue, 0);
+    assert.equal(account.statusType, 'inactive');
+    assert.equal(account.statusLabel, 'Inactive');
+    assert.equal(
+        account.statusReason,
+        'No balance or amount due and no payment for roughly 18 months.'
+    );
 });
 
 test('prioritizes inactive and past-due statuses', () => {
@@ -104,4 +122,31 @@ test('reconciles meters using the most complete readings for each meter', () => 
     assert.equal(reconciled.length, 2);
     assert.equal(reconciled[0].readings.length, 2);
     assert.equal(reconciled[0].readings[0].consumption, 12);
+});
+
+test('reconciles meter labels that differ only by the legacy display prefix', () => {
+    const angular = [
+        {
+            meterNumber: 'Mtr Number: 27025799',
+            readings: [{ date: '2020-01-31', consumption: 8 }],
+        },
+    ];
+    const fallback = [
+        {
+            meterNumber: '27025799',
+            readings: [{ date: '2019-12-31', consumption: 7 }],
+        },
+    ];
+
+    const reconciled = reconcileMeterSeries(angular, fallback);
+
+    assert.deepEqual(reconciled, [
+        {
+            meterNumber: '27025799',
+            readings: [
+                { date: '2020-01-31', consumption: 8 },
+                { date: '2019-12-31', consumption: 7 },
+            ],
+        },
+    ]);
 });

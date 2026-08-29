@@ -1,7 +1,11 @@
 export function normalizeAccount(raw) {
     if (!raw || typeof raw !== 'object') return null;
-    const currentBalance = numberValue(raw.PTntvfBalance);
-    const totalAmountDue = numberValue(raw.TotalAmtDue ?? raw.AmtToPay ?? raw.PTntvfBalance);
+    // TotalAmtDue is a customer-level total in the WebShare account list. Use the
+    // per-account balance first so one account's debt cannot make another account
+    // appear due or active.
+    const accountAmountDue = raw.PTntvfBalance ?? raw.AmtToPay;
+    const currentBalance = numberValue(accountAmountDue);
+    const totalAmountDue = currentBalance;
     const lastPaymentDate = stringValue(raw.LastPayDate);
     const explicitInactive = raw.PTntActive === 0 || raw.PTntActive === '0';
     const lastPaymentIsVeryOld = isVeryOldDate(lastPaymentDate);
@@ -75,7 +79,7 @@ export function normalizeMeterSeries(rawSeries) {
                 .filter((reading) => reading.date);
 
             return {
-                meterNumber: stringValue(
+                meterNumber: normalizeMeterNumber(
                     series?.meterNumber ||
                         series?.key ||
                         values[0]?.MetrMeterNumber ||
@@ -104,7 +108,7 @@ export function reconcileStatements(angularStatements, fallbackStatements) {
 }
 
 export function reconcileMeterSeries(angularMeters, fallbackMeters) {
-    const getMeterKey = (meter) => meter?.meterNumber;
+    const getMeterKey = (meter) => normalizeMeterNumber(meter?.meterNumber);
     const merged = mergeCompleteCollections([angularMeters, fallbackMeters], getMeterKey);
     const angularByMeter = indexByKey(angularMeters, getMeterKey);
     const fallbackByMeter = indexByKey(fallbackMeters, getMeterKey);
@@ -125,6 +129,7 @@ export function reconcileMeterSeries(angularMeters, fallbackMeters) {
         return {
             ...(fallbackMeter || {}),
             ...(angularMeter || {}),
+            meterNumber: key,
             readings: readings.map(
                 (reading) => angularReadingsByDate.get(String(reading?.date || '')) || reading
             ),
@@ -178,6 +183,10 @@ export function stringValue(value) {
     return String(value).trim();
 }
 
+function normalizeMeterNumber(value) {
+    return stringValue(value).replace(/^Mtr\s+Number:\s*/i, '');
+}
+
 export function numberValue(value) {
     if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
     if (value === null || value === undefined || value === '') return 0;
@@ -220,9 +229,9 @@ function getAccountStatusReason({
     hasPaymentDue,
 }) {
     if (explicitInactive) return 'Portal marks this account inactive.';
-    if (lastPaymentIsVeryOld)
-        return 'No balance or amount due and no payment for roughly 18 months.';
     if (explicitPastDue) return 'Portal indicates a past-due or delinquent amount.';
     if (hasPaymentDue) return 'Amount due is greater than zero.';
+    if (lastPaymentIsVeryOld)
+        return 'No balance or amount due and no payment for roughly 18 months.';
     return '';
 }

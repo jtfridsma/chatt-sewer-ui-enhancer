@@ -12,7 +12,11 @@ import {
 import { formatStatementLabel, parseStatementDate, parseStatementKey } from './statement-data.js';
 
 const BRIDGE_KEY = '__CSUIModernDashboardBridge__';
-const POLL_MS = 800;
+// Most updates are detected from Angular and the legacy panel DOM. This poll is only a
+// recovery path for changes made outside those mechanisms (for example, a legacy
+// controller mutating an object in place without a digest notification).
+const SAFETY_POLL_MS = 15000;
+const CHANGE_DEBOUNCE_MS = 50;
 const FALLBACK_DELAY_MS = 2000;
 const MAX_FALLBACK_ATTEMPTS = 3;
 
@@ -23,7 +27,12 @@ if (!window[BRIDGE_KEY]) {
 function installBridge() {
     let active = false;
     let timer = null;
-    let lastStateJson = '';
+    let publishTimeoutId = null;
+    let revision = 0;
+    let observedScope = null;
+    let observedDomRoot = null;
+    let domObserver = null;
+    let unwatchScope = [];
     const followUpTimeoutIds = new Set();
     const fallbackData = createFallbackDataStore();
 
@@ -31,17 +40,22 @@ function installBridge() {
         active = true;
         publishState({ force: true });
         if (!timer) {
-            timer = window.setInterval(() => publishState({ force: false }), POLL_MS);
+            timer = window.setInterval(() => publishState({ force: true }), SAFETY_POLL_MS);
         }
     }
 
     function stop() {
         active = false;
-        lastStateJson = '';
+        revision = 0;
         if (timer) {
             window.clearInterval(timer);
             timer = null;
         }
+        if (publishTimeoutId) {
+            window.clearTimeout(publishTimeoutId);
+            publishTimeoutId = null;
+        }
+        stopObservingStateSources();
         followUpTimeoutIds.forEach((id) => window.clearTimeout(id));
         followUpTimeoutIds.clear();
         fallbackData.scheduled.forEach((id) => window.clearTimeout(id));
@@ -65,14 +79,95 @@ function installBridge() {
             return;
         }
 
+        observeStateSources(scope);
         const selectedRaw = getSelectedRawAccount(scope);
         ensureRelatedData(scope, selectedRaw, fallbackData);
 
-        const payload = buildDashboardState(scope, fallbackData);
-        const nextJson = safeStringify(payload);
-        if (!force && nextJson === lastStateJson) return;
-        lastStateJson = nextJson;
-        dispatchState(payload);
+        // A monotonically increasing revision makes change handling explicit without
+        // serializing the complete (and potentially very large) readings collection.
+        dispatchState({ ...buildDashboardState(scope, fallbackData), revision: (revision += 1) });
+    }
+
+    function queueStatePublish() {
+        if (!active || publishTimeoutId) return;
+        publishTimeoutId = window.setTimeout(() => {
+            publishTimeoutId = null;
+            publishState({ force: false });
+        }, CHANGE_DEBOUNCE_MS);
+    }
+
+    function observeStateSources(scope) {
+        if (scope !== observedScope) {
+            stopObservingStateSources();
+            observedScope = scope;
+            observeAngularState(scope);
+        }
+
+        const domRoot = getLegacyPanelRoot();
+        if (domRoot && domRoot !== observedDomRoot && window.MutationObserver) {
+            domObserver?.disconnect();
+            observedDomRoot = domRoot;
+            domObserver = new window.MutationObserver(() => queueStatePublish());
+            domObserver.observe(domRoot, {
+                childList: true,
+                characterData: true,
+                subtree: true,
+            });
+        }
+    }
+
+    function observeAngularState(scope) {
+        if (typeof scope.$watchCollection !== 'function') return;
+
+        const watchCollections = [
+            () => scope.displayAccounts,
+            () => scope.userSelections,
+            () => scope.statements,
+            () => scope.waterMeterData,
+            () => scope.electricMeterData,
+            () => scope.waterMeters,
+        ];
+        const watchFlags = () => [
+            scope.showPaymentButton,
+            scope.allowPaperlessChange,
+            scope.allowRecurring,
+            scope.moreMeters,
+            scope.maxNumberOfMeters,
+            scope.showWaterConsumptionGraph,
+            scope.accountMessage,
+            scope.messageText,
+        ];
+
+        for (const getValue of watchCollections) {
+            addScopeWatch(() => scope.$watchCollection(getValue, queueStatePublish));
+        }
+        if (typeof scope.$watch === 'function') {
+            addScopeWatch(() => scope.$watch(watchFlags, queueStatePublish, true));
+        }
+    }
+
+    function addScopeWatch(createWatch) {
+        try {
+            const unwatch = createWatch();
+            if (typeof unwatch === 'function') unwatchScope.push(unwatch);
+        } catch {
+            // Some legacy Angular scopes expose only a partial watcher API.
+        }
+    }
+
+    function stopObservingStateSources() {
+        unwatchScope.forEach((unwatch) => {
+            try {
+                unwatch();
+            } catch {
+                // A destroyed legacy scope can reject watcher teardown.
+            }
+        });
+        unwatchScope = [];
+        observedScope = null;
+        domObserver?.disconnect();
+        domObserver = null;
+        observedDomRoot = null;
     }
 
     function selectAccount(event) {
@@ -312,6 +407,7 @@ function hasCurrentAccountData(scope, accountKey, property) {
 function runFallbackRequest(store, key, task) {
     if (store.pending.has(key)) return;
     store.pending.add(key);
+    window.dispatchEvent(new CustomEvent(EVENTS.requestState));
 
     Promise.resolve()
         .then(task)
@@ -408,6 +504,14 @@ function getAccountScope() {
     }
 
     return null;
+}
+
+function getLegacyPanelRoot() {
+    return (
+        document.querySelector('[ng-controller="accountController"]') ||
+        document.querySelector('.container-fluid[ng-controller]') ||
+        null
+    );
 }
 
 function isAccountScope(scope) {
@@ -671,12 +775,4 @@ function runInAngular(scope, fn) {
 
 function dispatchState(detail) {
     window.dispatchEvent(new CustomEvent(EVENTS.state, { detail }));
-}
-
-function safeStringify(value) {
-    try {
-        return JSON.stringify(value);
-    } catch {
-        return '';
-    }
 }
