@@ -14,10 +14,19 @@ export async function mountConsumptionCharts(root) {
 function loadChartModule() {
     if (!chartModulePromise) {
         const url = getExtensionUrl(CHART_MODULE_PATH);
-        chartModulePromise = import(url).catch((error) => {
+        chartModulePromise = loadChartModuleFromUrl(url).catch((error) => {
             chartModulePromise = null;
             throw error;
         });
     }
     return chartModulePromise;
+}
+
+function loadChartModuleFromUrl(url) {
+    if (url === CHART_MODULE_PATH) {
+        throw new Error(
+            'The consumption chart module is unavailable. Reload the page after reloading the extension.'
+        );
+    }
+    return import(url);
 }

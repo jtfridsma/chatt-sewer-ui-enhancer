@@ -57,7 +57,10 @@ export function addThemeToggle(ctx) {
     toggle.checked = initialOn;
 
     const diagnosticScope = getDiagnosticScope(ctx);
-    const initialDiagnostics = readDiagnostics(diagnosticScope);
+    const initialDiagnostics = clearTransientDashboardDiagnostics(
+        readDiagnostics(diagnosticScope),
+        diagnosticScope
+    );
     renderDiagnostics(initialDiagnostics, diagnostics, diagnosticScope);
     syncDiagnosticBadge(initialDiagnostics, errorBadge, badgeIcon);
 
@@ -110,6 +113,10 @@ export function addThemeToggle(ctx) {
         const next = !!toggle.checked;
         setThemeEnabled(next);
         persistThemeEnabled(next);
+
+        if (!next && diagnosticScope === 'webshare:dashboard') {
+            window.__CSUI__?.clearDashboardDataDiagnostics?.();
+        }
 
         try {
             dispatchThemeToggle(next);
@@ -280,7 +287,42 @@ function installGlobalErrorReporter({
             renderDiagnostics(diagnostics, diagnosticsContainer, diagnosticScope);
             syncDiagnosticBadge(diagnostics, errorBadge, badgeIcon);
         },
+        clearDashboardDataDiagnostics() {
+            const nextDiagnostics = clearTransientDashboardDiagnostics(
+                diagnostics,
+                diagnosticScope
+            );
+            if (nextDiagnostics.length === diagnostics.length) return;
+
+            diagnostics = nextDiagnostics;
+            renderDiagnostics(diagnostics, diagnosticsContainer, diagnosticScope);
+            syncDiagnosticBadge(diagnostics, errorBadge, badgeIcon);
+        },
     };
+}
+
+function clearTransientDashboardDiagnostics(diagnostics, scope) {
+    if (scope !== 'webshare:dashboard') return diagnostics;
+
+    const nextDiagnostics = diagnostics.filter(
+        (diagnostic) => !isTransientDashboardDiagnostic(diagnostic)
+    );
+    if (nextDiagnostics.length !== diagnostics.length) {
+        persistDiagnostics(nextDiagnostics, scope);
+    }
+    return nextDiagnostics;
+}
+
+function isTransientDashboardDiagnostic(diagnostic) {
+    const message = diagnostic?.message || '';
+    return (
+        /\b(?:data|state|meter(?:\s+(?:data|readings?))?)\b.*\b(?:not\s+available|unavailable|timed?\s*out)\b/i.test(
+            message
+        ) ||
+        /(?:csui-)?consumption chart|csui-consumption-chart|failed to resolve module specifier/i.test(
+            message
+        )
+    );
 }
 
 function getDiagnosticScope(ctx) {

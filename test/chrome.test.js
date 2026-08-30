@@ -1,7 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { applyPageChrome, restorePageChrome } from '../src/scripts/utilities/chrome.js';
+import {
+    applyPageChrome,
+    getExtensionUrl,
+    restorePageChrome,
+} from '../src/scripts/utilities/chrome.js';
 
 test('page chrome restores the host title and preserves host favicons', () => {
     const originalDocument = globalThis.document;
@@ -73,5 +77,34 @@ test('page chrome restores the host title and preserves host favicons', () => {
         assert.equal(globalThis.document.title, 'Updated host payment page');
     } finally {
         globalThis.document = originalDocument;
+    }
+});
+
+test('extension URLs remain usable after runtime access is invalidated', () => {
+    const originalChrome = globalThis.chrome;
+    const extensionId = 'abcdefghijklmnopabcdefghijklmnop';
+
+    try {
+        globalThis.chrome = {
+            runtime: {
+                getURL(path) {
+                    return `chrome-extension://${extensionId}/${path}`;
+                },
+            },
+        };
+        assert.equal(
+            getExtensionUrl('public/csui-consumption-chart.js'),
+            `chrome-extension://${extensionId}/public/csui-consumption-chart.js`
+        );
+
+        globalThis.chrome.runtime.getURL = () => {
+            throw new Error('Extension context invalidated.');
+        };
+        assert.equal(
+            getExtensionUrl('public/csui-consumption-chart.js'),
+            `chrome-extension://${extensionId}/public/csui-consumption-chart.js`
+        );
+    } finally {
+        globalThis.chrome = originalChrome;
     }
 });

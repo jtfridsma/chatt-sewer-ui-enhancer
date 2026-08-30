@@ -142,6 +142,56 @@ test('theme toggle keeps diagnostics scoped to the current page type', () => {
     }
 });
 
+test('dashboard data availability diagnostics reset on startup and disable', () => {
+    const dom = new JSDOM('<!doctype html><html><body></body></html>', {
+        url: 'https://share.dwcorp.com/WebShare/AccountOverview.aspx?clientKey=3652&viewID=3',
+    });
+    const originalWindow = globalThis.window;
+    const originalDocument = globalThis.document;
+    const originalLocalStorage = globalThis.localStorage;
+
+    try {
+        globalThis.window = dom.window;
+        globalThis.document = dom.window.document;
+        globalThis.localStorage = dom.window.localStorage;
+        localStorage.setItem(
+            'csui-diagnostics:webshare:dashboard',
+            JSON.stringify([
+                {
+                    level: 'warning',
+                    message: 'Modern dashboard data was not available in time.',
+                },
+                { level: 'warning', message: 'Legacy meter data was unavailable.' },
+                { level: 'error', message: 'A separate dashboard error.' },
+            ])
+        );
+
+        addThemeToggle();
+        const diagnostics = document.getElementById('csui-diagnostics');
+        const toggle = document.getElementById('csui-enabled-toggle');
+
+        assert.doesNotMatch(diagnostics.textContent, /data was not available/i);
+        assert.doesNotMatch(diagnostics.textContent, /meter data was unavailable/i);
+        assert.match(diagnostics.textContent, /separate dashboard error/i);
+
+        window.__CSUI__.reportWarning('Dashboard data was unavailable.');
+        window.__CSUI__.reportWarning(
+            "Failed to resolve module specifier 'public/csui-consumption-chart.js'"
+        );
+        window.__CSUI__.reportWarning('A separate dashboard warning.');
+        toggle.checked = false;
+        toggle.dispatchEvent(new window.Event('change'));
+
+        assert.doesNotMatch(diagnostics.textContent, /data was unavailable/i);
+        assert.doesNotMatch(diagnostics.textContent, /csui-consumption-chart/i);
+        assert.match(diagnostics.textContent, /separate dashboard warning/i);
+    } finally {
+        globalThis.window = originalWindow;
+        globalThis.document = originalDocument;
+        globalThis.localStorage = originalLocalStorage;
+    }
+});
+
 test('legacy data adapter start and stop are idempotent', () => {
     const listeners = new Map();
     const dispatched = [];

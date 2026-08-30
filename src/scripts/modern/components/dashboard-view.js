@@ -122,7 +122,7 @@ export function createDashboardView({ host, actions }) {
                 }
                 chartInstances = charts;
             })
-            .catch((error) => window.__CSUI__?.reportWarning?.(error));
+            .catch(logConsumptionChartFailure);
         scheduleSidebarLayout();
     }
 
@@ -837,6 +837,16 @@ function isSameAccount(a, b) {
     if (!a || !b) return false;
     if (a.accountKey && b.accountKey) return a.accountKey === b.accountKey;
     return a.accountNumber === b.accountNumber;
+}
+
+function logConsumptionChartFailure(error) {
+    try {
+        if (localStorage.getItem('csui-modern-debug') !== 'true') return;
+    } catch {
+        return;
+    }
+
+    console.debug('[CSUI Modern] consumption chart module was unavailable', error);
 }
 
 function getAccountValue(account) {

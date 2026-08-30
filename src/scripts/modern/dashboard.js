@@ -201,6 +201,11 @@ function showLegacyDashboard() {
 }
 
 function syncModernDashboard() {
+    // Data acquisition failures are transient: a fresh bridge session may be
+    // healthy after the portal or extension reloads. Do not retain the old
+    // warning while this instance is attempting a new initialization.
+    window.__CSUI__?.clearDashboardDataDiagnostics?.();
+
     if (isThemeEnabled()) {
         initializeModernDashboard();
     } else {

@@ -8,12 +8,13 @@ const FAVICON_IDS = ['csui-favicon-16', 'csui-favicon-32', 'csui-favicon-shortcu
 
 let baseFaviconApplied = false;
 let originalDocumentTitle;
+let extensionOrigin = '';
 
 export function getExtensionUrl(path) {
     try {
         // Chrome MV3 content scripts
         if (typeof chrome !== 'undefined' && chrome?.runtime?.getURL) {
-            return chrome.runtime.getURL(path);
+            return rememberExtensionOrigin(chrome.runtime.getURL(path));
         }
     } catch {
         // ignore
@@ -22,14 +23,35 @@ export function getExtensionUrl(path) {
     try {
         // Firefox/Safari (if applicable)
         if (typeof browser !== 'undefined' && browser?.runtime?.getURL) {
-            return browser.runtime.getURL(path);
+            return rememberExtensionOrigin(browser.runtime.getURL(path));
         }
     } catch {
         // ignore
     }
 
-    // Fallback (may not work on host pages, but harmless)
+    // A page can keep an old content script alive while its extension reloads.
+    // runtime.getURL() then throws, but a URL acquired earlier in that same
+    // page session still points at the extension's stable origin.
+    if (extensionOrigin) {
+        try {
+            return new URL(path, `${extensionOrigin}/`).href;
+        } catch {
+            // Fall through to the legacy fallback below.
+        }
+    }
+
+    // Callers that need a module URL must validate this fallback first.
     return path;
+}
+
+function rememberExtensionOrigin(url) {
+    try {
+        const parsed = new URL(url);
+        extensionOrigin = `${parsed.protocol}//${parsed.host}`;
+    } catch {
+        // Keep the successfully returned runtime URL even if it cannot be parsed.
+    }
+    return url;
 }
 
 function upsertFaviconLink({ id, rel = 'icon', href, sizes, type = 'image/png' }) {
