@@ -122,7 +122,7 @@ export function createDashboardView({ host, actions }) {
                 }
                 chartInstances = charts;
             })
-            .catch((error) => window.__CSUI__?.reportError?.(error));
+            .catch((error) => window.__CSUI__?.reportWarning?.(error));
         scheduleSidebarLayout();
     }
 

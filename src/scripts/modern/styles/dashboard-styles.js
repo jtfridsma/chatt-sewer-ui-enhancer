@@ -98,6 +98,7 @@ export const DASHBOARD_STYLES = `
             display: flex;
             align-items: center;
             gap: 0.8rem;
+            flex: 1 1 auto;
             min-width: 0;
         }
 
@@ -120,6 +121,7 @@ export const DASHBOARD_STYLES = `
             align-items: center;
             gap: 0.6rem;
             flex: 0 0 auto;
+            margin-left: auto;
             padding: 0.35rem 0;
         }
 
@@ -292,6 +294,7 @@ export const DASHBOARD_STYLES = `
 
         .account-nav-item__address {
             margin-top: 3px;
+            max-width: 240px;
             color: var(--dashboard-heading);
             font-size: 0.98rem;
             font-weight: 700;
@@ -318,6 +321,8 @@ export const DASHBOARD_STYLES = `
         }
 
         .account-overview__body {
+            container-name: account-overview;
+            container-type: inline-size;
             display: grid;
             grid-template-areas:
                 "identity amount"
@@ -357,7 +362,7 @@ export const DASHBOARD_STYLES = `
 
         .account-overview__facts {
             display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-template-columns: 1fr;
             grid-area: facts;
             gap: 0.75rem;
             margin: 0;
@@ -373,21 +378,21 @@ export const DASHBOARD_STYLES = `
             color: var(--dashboard-text-muted);
             font-size: 0.74rem;
             font-weight: 400;
+            line-height: 1.35;
         }
 
         .account-status-label {
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 0.25rem;
-            min-height: 1.75rem;
         }
 
         .account-status-info {
             position: relative;
             display: inline-grid;
             place-items: center;
-            width: 1.75rem;
-            height: 1.75rem;
+            width: 1rem;
+            height: 1rem;
             padding: 0;
             border: 0;
             border-radius: 999px;
@@ -397,11 +402,11 @@ export const DASHBOARD_STYLES = `
         }
 
         .account-status-info--placeholder {
-            visibility: hidden;
+            display: none;
         }
 
         .account-status-info__icon {
-            font-size: 1rem;
+            font-size: 0.85rem;
         }
 
         .account-status-tooltip {
@@ -949,6 +954,7 @@ export const DASHBOARD_STYLES = `
         .meter-tabs__list {
             display: flex;
             gap: 0.45rem;
+            flex-wrap: nowrap;
             overflow-x: auto;
             padding-bottom: 0.15rem;
         }
@@ -956,8 +962,9 @@ export const DASHBOARD_STYLES = `
         .meter-tab {
             appearance: none;
             display: grid;
-            grid-template-columns: auto minmax(0, 1fr);
+            grid-template-columns: auto max-content;
             gap: 0.14rem 0.75rem;
+            flex: 0 0 auto;
             min-width: 148px;
             border: 1px solid var(--dashboard-input-border);
             border-radius: 8px;
@@ -994,7 +1001,7 @@ export const DASHBOARD_STYLES = `
 
         .meter-tab__label {
             font-weight: 700;
-            overflow-wrap: anywhere;
+            white-space: nowrap;
         }
 
         .meter-tab small {
@@ -1002,6 +1009,7 @@ export const DASHBOARD_STYLES = `
             gap: 0.25rem;
             font-size: 0.74rem;
             font-weight: 400;
+            white-space: nowrap;
         }
 
         .meter-tab small span {
@@ -1109,7 +1117,6 @@ export const DASHBOARD_STYLES = `
         }
 
         @media (max-width: 900px) {
-            .modern-header,
             .dashboard-layout,
             .account-overview__body,
             .account-overview__facts,
@@ -1129,17 +1136,12 @@ export const DASHBOARD_STYLES = `
                     "amount";
             }
 
-            .modern-header {
-                display: grid;
-            }
-
             .modern-header__identity {
                 align-items: center;
             }
 
             .modern-header__actions {
-                justify-content: start;
-                flex-wrap: wrap;
+                flex-wrap: nowrap;
             }
 
             .account-sidebar {
@@ -1187,16 +1189,25 @@ export const DASHBOARD_STYLES = `
             }
         }
 
-        @media (max-width: 620px) {
+        @media (max-width: 720px) {
             .shell {
                 width: min(100%, calc(100vw - 1rem));
                 padding-top: 0.5rem;
             }
 
+            .modern-header {
+                gap: 0.65rem;
+                padding: 0.55rem 0.65rem;
+            }
+
+            .modern-header__identity {
+                gap: 0.6rem;
+            }
+
             .modern-header__actions {
-                display: grid;
-                grid-template-columns: 1fr;
-                width: 100%;
+                display: block;
+                width: auto;
+                padding: 0;
             }
 
             .action-menu--desktop {
@@ -1205,45 +1216,47 @@ export const DASHBOARD_STYLES = `
 
             .action-menu--mobile {
                 display: block;
-                width: 100%;
             }
 
             .modern-header__logo {
-                height: 62px;
-                max-width: 180px;
+                height: 54px;
+                max-width: 140px;
             }
 
-            .action-menu__panel {
-                position: static;
-                width: 100%;
-                margin-top: 0.45rem;
-                box-shadow: none;
+            .modern-header__text {
+                padding: 0;
             }
 
-            .ghost-action,
-            .action-menu summary,
-            .menu-button {
-                width: 100%;
+            .modern-header h1 {
+                font-size: clamp(1.12rem, 5vw, 1.35rem);
+                line-height: 1.1;
+                white-space: nowrap;
             }
 
-            .action-menu summary {
-                justify-content: space-between;
+            .modern-header .eyebrow {
+                margin-bottom: 0.2rem;
+                font-size: 0.7rem;
+                white-space: nowrap;
+            }
+
+            .action-menu--mobile summary {
+                display: grid;
+                place-items: center;
+                width: 40px;
+                min-height: 40px;
+                padding: 0;
+            }
+
+            .action-menu--mobile .action-menu__icon {
+                font-size: 1.35rem;
+                color: var(--dashboard-heading);
             }
         }
 
-        @media (min-width: 621px) and (max-width: 900px) {
+        @media (min-width: 721px) and (max-width: 900px) {
             .modern-header__actions {
                 display: flex;
                 flex-wrap: nowrap;
-            }
-
-            .account-overview__facts {
-                display: flex;
-                gap: 0.75rem;
-            }
-
-            .account-overview__facts > div {
-                flex: 1 1 0;
             }
 
             .summary-field {
@@ -1258,6 +1271,18 @@ export const DASHBOARD_STYLES = `
 
             .chart__summary .field {
                 flex: 1 1 0;
+            }
+        }
+
+        @container account-overview (min-width: 640px) {
+            .account-overview__facts {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @container account-overview (min-width: 960px) {
+            .account-overview__facts {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
             }
         }
     `;

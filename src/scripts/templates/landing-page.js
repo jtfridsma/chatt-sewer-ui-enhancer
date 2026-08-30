@@ -80,7 +80,7 @@ function reportMissingRequiredBlocks({ mainBlock, serviceBlock }) {
     if (!missingIds.length) return;
 
     hasReportedMissingBlocks = true;
-    window.__CSUI__?.reportError?.(
+    window.__CSUI__?.reportWarning?.(
         new Error(`Required Squarespace block missing: ${missingIds.join(', ')}`)
     );
 }

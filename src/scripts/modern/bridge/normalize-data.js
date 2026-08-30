@@ -107,9 +107,16 @@ export function reconcileStatements(angularStatements, fallbackStatements) {
     });
 }
 
-export function reconcileMeterSeries(angularMeters, fallbackMeters) {
+export function reconcileMeterSeries(
+    angularMeters,
+    fallbackMeters,
+    { includeFallbackMeters = true } = {}
+) {
     const getMeterKey = (meter) => normalizeMeterNumber(meter?.meterNumber);
-    const merged = mergeCompleteCollections([angularMeters, fallbackMeters], getMeterKey);
+    const merged = mergeCompleteCollections(
+        includeFallbackMeters ? [angularMeters, fallbackMeters] : [angularMeters],
+        getMeterKey
+    );
     const angularByMeter = indexByKey(angularMeters, getMeterKey);
     const fallbackByMeter = indexByKey(fallbackMeters, getMeterKey);
 

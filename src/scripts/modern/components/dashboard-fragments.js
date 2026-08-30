@@ -33,9 +33,8 @@ export function renderHeader() {
                     <span>Sign Out</span>
                 </button>
                 <details class="action-menu action-menu--mobile" data-action-menu>
-                    <summary>
-                        <span>Menu</span>
-                        ${renderIcon('keyboard_arrow_down', 'action-menu__icon')}
+                    <summary aria-label="Open account menu" title="Account menu">
+                        ${renderIcon('menu', 'action-menu__icon')}
                     </summary>
                     <div class="action-menu__panel">
                         <button type="button" class="menu-button" data-action="profile">

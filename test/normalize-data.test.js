@@ -124,6 +124,24 @@ test('reconciles meters using the most complete readings for each meter', () => 
     assert.equal(reconciled[0].readings[0].consumption, 12);
 });
 
+test('does not add fallback-only meters to the current Angular meter collection', () => {
+    const angular = [{ meterNumber: 'current', readings: [{ date: '2026-08-01' }] }];
+    const fallback = [
+        { meterNumber: 'current', readings: [{ date: '2026-07-01' }] },
+        { meterNumber: 'retired', readings: [{ date: '2020-01-31' }] },
+    ];
+
+    const reconciled = reconcileMeterSeries(angular, fallback, {
+        includeFallbackMeters: false,
+    });
+
+    assert.deepEqual(
+        reconciled.map((meter) => meter.meterNumber),
+        ['current']
+    );
+    assert.equal(reconciled[0].readings.length, 2);
+});
+
 test('reconciles meter labels that differ only by the legacy display prefix', () => {
     const angular = [
         {

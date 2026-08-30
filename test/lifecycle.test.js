@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { JSDOM } from 'jsdom';
 
+import { addThemeToggle } from '../src/scripts/components/theme-toggle.js';
 import { createLegacyDataAdapter } from '../src/scripts/modern/adapters/legacy-data.js';
 import { MODERN_BRIDGE_EVENTS } from '../src/scripts/modern/bridge/events.js';
 import {
@@ -47,6 +49,94 @@ test('theme state uses one storage and document contract', () => {
         setThemeEnabled(false);
         assert.equal(isThemeEnabled(), false);
     } finally {
+        globalThis.document = originalDocument;
+        globalThis.localStorage = originalLocalStorage;
+    }
+});
+
+test('theme toggle shows diagnostics and extension version', () => {
+    const dom = new JSDOM('<!doctype html><html><body></body></html>', {
+        url: 'https://share.dwcorp.com/WebShare/',
+    });
+    const originalWindow = globalThis.window;
+    const originalDocument = globalThis.document;
+    const originalLocalStorage = globalThis.localStorage;
+    const originalChrome = globalThis.chrome;
+
+    globalThis.window = dom.window;
+    globalThis.document = dom.window.document;
+    globalThis.localStorage = dom.window.localStorage;
+    globalThis.chrome = {
+        runtime: {
+            getManifest() {
+                return { version: '1.2.3' };
+            },
+        },
+    };
+
+    try {
+        addThemeToggle();
+        const root = document.getElementById('csui-ui');
+        const diagnostics = document.getElementById('csui-diagnostics');
+        const badge = document.getElementById('csui-error-badge');
+        const badgeIcon = document.getElementById('csui-diagnostic-badge-icon');
+
+        assert.match(root.textContent, /v1\.2\.3/);
+        window.__CSUI__.reportWarning('The legacy meter data was unavailable.');
+
+        assert.equal(badge.getAttribute('data-visible'), 'true');
+        assert.equal(badge.getAttribute('data-severity'), 'warning');
+        assert.equal(badgeIcon.textContent, 'warning');
+        assert.equal(diagnostics.hidden, false);
+        assert.match(diagnostics.textContent, /Warning/);
+        assert.match(diagnostics.textContent, /legacy meter data was unavailable/);
+
+        window.__CSUI__.reportError('The dashboard could not load.');
+        assert.equal(badge.getAttribute('data-severity'), 'error');
+        assert.equal(badgeIcon.textContent, 'error');
+    } finally {
+        globalThis.window = originalWindow;
+        globalThis.document = originalDocument;
+        globalThis.localStorage = originalLocalStorage;
+        globalThis.chrome = originalChrome;
+    }
+});
+
+test('theme toggle keeps diagnostics scoped to the current page type', () => {
+    const dashboardDom = new JSDOM('<!doctype html><html><body></body></html>', {
+        url: 'https://share.dwcorp.com/WebShare/AccountOverview.aspx?clientKey=3652&viewID=3',
+    });
+    const loginDom = new JSDOM('<!doctype html><html><body></body></html>', {
+        url: 'https://share.dwcorp.com/WebShare/Login.aspx?clientKey=3652&viewID=3',
+    });
+    const originalWindow = globalThis.window;
+    const originalDocument = globalThis.document;
+    const originalLocalStorage = globalThis.localStorage;
+
+    try {
+        globalThis.window = dashboardDom.window;
+        globalThis.document = dashboardDom.window.document;
+        globalThis.localStorage = dashboardDom.window.localStorage;
+        addThemeToggle();
+        window.__CSUI__.reportWarning('Modern dashboard data was not available in time.');
+
+        const dashboardDiagnostics = localStorage.getItem('csui-diagnostics:webshare:dashboard');
+        assert.ok(dashboardDiagnostics);
+
+        globalThis.window = loginDom.window;
+        globalThis.document = loginDom.window.document;
+        globalThis.localStorage = loginDom.window.localStorage;
+        localStorage.setItem('csui-diagnostics:webshare:dashboard', dashboardDiagnostics);
+        addThemeToggle();
+
+        const diagnostics = document.getElementById('csui-diagnostics');
+        assert.equal(diagnostics.hidden, true);
+
+        window.__CSUI__.reportWarning('The sign-in form took longer than expected.');
+        assert.match(diagnostics.textContent, /Sign-in page Warning/);
+        assert.equal(localStorage.getItem('csui-diagnostics:webshare:login') !== null, true);
+    } finally {
+        globalThis.window = originalWindow;
         globalThis.document = originalDocument;
         globalThis.localStorage = originalLocalStorage;
     }

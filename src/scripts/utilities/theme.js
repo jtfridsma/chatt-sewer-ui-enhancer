@@ -116,7 +116,7 @@ function ensureFontsLoaded() {
     ensureHeadLink(head, {
         id: 'csui-google-symbols',
         rel: 'stylesheet',
-        href: 'https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded&icon_names=account_circle,autorenew,block,check_circle,close,description,edit_note,gas_meter,info,keyboard_arrow_down,lock,logout,payments,receipt_long,warning&display=block',
+        href: 'https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded&icon_names=account_circle,autorenew,block,check_circle,close,description,edit_note,error,gas_meter,info,keyboard_arrow_down,lock,logout,menu,payments,receipt_long,warning&display=block',
     });
 }
 

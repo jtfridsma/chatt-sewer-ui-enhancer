@@ -38,6 +38,13 @@ function mountConsumptionChart(canvas) {
             animation: {
                 duration: 180,
             },
+            transitions: {
+                resize: {
+                    animation: {
+                        duration: 0,
+                    },
+                },
+            },
             maintainAspectRatio: false,
             responsive: true,
             plugins: {

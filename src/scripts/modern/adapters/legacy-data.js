@@ -18,7 +18,7 @@ export function createLegacyDataAdapter({ onState, onUnavailable, logger } = {})
 
         timeoutId = window.setTimeout(() => {
             if (!active || receivedState) return;
-            logger?.warn?.('initialization failed; reverting to legacy mode');
+            logger?.log?.('modern dashboard data was not available in time');
             onUnavailable?.(new Error('Modern dashboard data was not available in time.'));
         }, FIRST_STATE_TIMEOUT_MS);
     }

@@ -29,6 +29,7 @@ function installBridge() {
     let timer = null;
     let publishTimeoutId = null;
     let revision = 0;
+    let lastStateFingerprint = '';
     let observedScope = null;
     let observedDomRoot = null;
     let domObserver = null;
@@ -40,13 +41,14 @@ function installBridge() {
         active = true;
         publishState({ force: true });
         if (!timer) {
-            timer = window.setInterval(() => publishState({ force: true }), SAFETY_POLL_MS);
+            timer = window.setInterval(() => publishState({ force: false }), SAFETY_POLL_MS);
         }
     }
 
     function stop() {
         active = false;
         revision = 0;
+        lastStateFingerprint = '';
         if (timer) {
             window.clearInterval(timer);
             timer = null;
@@ -64,7 +66,7 @@ function installBridge() {
 
     function requestState() {
         if (!active) return;
-        publishState({ force: true });
+        publishState({ force: false });
     }
 
     function publishState({ force }) {
@@ -83,9 +85,14 @@ function installBridge() {
         const selectedRaw = getSelectedRawAccount(scope);
         ensureRelatedData(scope, selectedRaw, fallbackData);
 
+        const state = buildDashboardState(scope, fallbackData);
+        const fingerprint = getStateFingerprint(state);
+        if (!force && fingerprint === lastStateFingerprint) return;
+
+        lastStateFingerprint = fingerprint;
         // A monotonically increasing revision makes change handling explicit without
         // serializing the complete (and potentially very large) readings collection.
-        dispatchState({ ...buildDashboardState(scope, fallbackData), revision: (revision += 1) });
+        dispatchState({ ...state, revision: (revision += 1) });
     }
 
     function queueStatePublish() {
@@ -254,7 +261,7 @@ function installBridge() {
         [0, 350, 800, 1600, 3000, 5000].forEach((delay) => {
             const timeoutId = window.setTimeout(() => {
                 followUpTimeoutIds.delete(timeoutId);
-                if (active) publishState({ force: true });
+                if (active) publishState({ force: false });
             }, delay);
             followUpTimeoutIds.add(timeoutId);
         });
@@ -545,12 +552,19 @@ function buildDashboardState(scope, fallbackData) {
     const fallbackWaterMeters = normalizeMeterSeries(
         fallbackData?.waterMetersByAccount?.get(selectedRawKey)
     );
-    const waterMeters = reconcileMeterSeries(scopeWaterMeters, fallbackWaterMeters);
+    // The Angular collection is the portal's current-meter set. The fallback service
+    // also returns retired installations, so it may enrich matching readings but must
+    // not add extra meter cards once Angular has supplied a collection.
+    const waterMeters = reconcileMeterSeries(scopeWaterMeters, fallbackWaterMeters, {
+        includeFallbackMeters: scopeWaterMeters.length === 0,
+    });
     const electricMeters = normalizeMeterSeries(scope.electricMeterData);
-    const expectedWaterMeterCount = Math.max(
-        getExpectedMeterCount(scope.waterMeters, scope.maxNumberOfMeters),
-        fallbackData?.waterMeterCountsByAccount?.get(selectedRawKey) || 0
-    );
+    const expectedWaterMeterCount = scopeWaterMeters.length
+        ? scopeWaterMeters.length
+        : Math.max(
+              getExpectedMeterCount(scope.waterMeters, scope.maxNumberOfMeters),
+              fallbackData?.waterMeterCountsByAccount?.get(selectedRawKey) || 0
+          );
 
     return {
         ok: true,
@@ -595,6 +609,69 @@ function buildDashboardState(scope, fallbackData) {
                       : 'angular',
         },
     };
+}
+
+function getStateFingerprint(state) {
+    let hash = 2166136261;
+    let fieldCount = 0;
+
+    const add = (value) => {
+        const text = String(value ?? '');
+        for (let index = 0; index < text.length; index += 1) {
+            hash = Math.imul(hash ^ text.charCodeAt(index), 16777619);
+        }
+        hash = Math.imul(hash ^ 0xff, 16777619);
+        fieldCount += 1;
+    };
+    const addReadings = (meters) => {
+        (Array.isArray(meters) ? meters : []).forEach((meter) => {
+            add(meter?.meterNumber);
+            (Array.isArray(meter?.readings) ? meter.readings : []).forEach((reading) => {
+                add(reading?.date);
+                add(reading?.consumption);
+            });
+        });
+    };
+
+    const addAccount = (account) => {
+        [
+            account?.accountKey,
+            account?.accountNumber,
+            account?.serviceAddress,
+            account?.name,
+            account?.currentBalance,
+            account?.totalAmountDue,
+            account?.lastPaymentAmount,
+            account?.lastPaymentDate,
+            account?.lastStatementBalance,
+            account?.paperlessBilling,
+            account?.autoPay,
+            account?.active,
+            account?.pastInactive,
+            account?.inactiveStatusInferred,
+            account?.statusType,
+            account?.statusLabel,
+            account?.statusReason,
+        ].forEach(add);
+    };
+
+    add(state?.selectedAccountNumber);
+    addAccount(state?.selectedAccount);
+    (Array.isArray(state?.accounts) ? state.accounts : []).forEach(addAccount);
+    (Array.isArray(state?.statements) ? state.statements : []).forEach((statement) => {
+        add(statement?.statementKey);
+        add(statement?.label);
+        add(statement?.url);
+    });
+    addReadings(state?.waterMeters);
+    addReadings(state?.electricMeters);
+    Object.entries(state?.flags || {}).forEach(([key, value]) => {
+        add(key);
+        add(value);
+    });
+    (Array.isArray(state?.messages) ? state.messages : []).forEach(add);
+
+    return `${fieldCount}:${hash >>> 0}`;
 }
 
 function getSelectedRawAccount(scope) {

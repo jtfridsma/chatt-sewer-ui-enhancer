@@ -6,21 +6,25 @@ import {
     readThemeEnabled,
     setThemeEnabled,
 } from '../utilities/theme-state.js';
+import { getChattContext } from '../utilities/context.js';
 
-const STORAGE_KEY_ERROR_FLAG = 'csui-has-error';
+const STORAGE_KEY_DIAGNOSTICS = 'csui-diagnostics';
 
 const UI_ROOT_ID = 'csui-ui';
 const LAUNCHER_ID = 'csui-launcher';
 const PANEL_ID = 'csui-panel';
 const TOGGLE_ID = 'csui-enabled-toggle';
 const ERROR_BADGE_ID = 'csui-error-badge';
+const BADGE_ICON_ID = 'csui-diagnostic-badge-icon';
+const DIAGNOSTICS_ID = 'csui-diagnostics';
+const MAX_DIAGNOSTICS = 3;
 
 const LINKS = {
     reportIssue: 'https://github.com/jtfridsma/chatt-sewer-ui-enhancer/issues',
     buyCoffee: 'https://buymeacoffee.com/jtfridsma',
 };
 
-export function addThemeToggle() {
+export function addThemeToggle(ctx) {
     if (typeof document === 'undefined') return;
     if (!document.body) return;
 
@@ -39,6 +43,8 @@ export function addThemeToggle() {
     const panel = root.querySelector(`#${PANEL_ID}`);
     const toggle = root.querySelector(`#${TOGGLE_ID}`);
     const errorBadge = root.querySelector(`#${ERROR_BADGE_ID}`);
+    const badgeIcon = root.querySelector(`#${BADGE_ICON_ID}`);
+    const diagnostics = root.querySelector(`#${DIAGNOSTICS_ID}`);
 
     if (!launcher || !panel || !toggle) return;
 
@@ -50,9 +56,10 @@ export function addThemeToggle() {
     setThemeEnabled(initialOn);
     toggle.checked = initialOn;
 
-    // Restore error badge state (default: none)
-    const hasError = readErrorFlag();
-    setErrorBadgeVisible(!!hasError, errorBadge);
+    const diagnosticScope = getDiagnosticScope(ctx);
+    const initialDiagnostics = readDiagnostics(diagnosticScope);
+    renderDiagnostics(initialDiagnostics, diagnostics, diagnosticScope);
+    syncDiagnosticBadge(initialDiagnostics, errorBadge, badgeIcon);
 
     const openPanel = () => {
         panel.hidden = false;
@@ -111,10 +118,16 @@ export function addThemeToggle() {
         }
     });
 
-    installGlobalErrorReporter({ errorBadge });
+    installGlobalErrorReporter({
+        errorBadge,
+        badgeIcon,
+        diagnostics,
+        diagnosticScope,
+    });
 }
 
 function getMarkup() {
+    const version = getExtensionVersion();
     return `
     <button
       id="${LAUNCHER_ID}"
@@ -125,7 +138,7 @@ function getMarkup() {
       aria-expanded="false"
     >
       <span id="${ERROR_BADGE_ID}" class="csui-control__badge" aria-hidden="true">
-        ⚠️
+        <span id="${BADGE_ICON_ID}" class="material-symbols-rounded csui-control__badge-icon">warning</span>
       </span>
     </button>
 
@@ -136,7 +149,10 @@ function getMarkup() {
       aria-label="Chattanooga Sewer UI Enhancer"
     >
       <div class="csui-control__header">
-        <div class="csui-control__title">Chattanooga Sewer UI Enhancer</div>
+        <div class="csui-control__title">
+          <span>Chattanooga Sewer UI Enhancer</span>
+          <span class="csui-control__version">v${escapeHtml(version)}</span>
+        </div>
       </div>
 
       <div class="csui-control__row">
@@ -146,6 +162,8 @@ function getMarkup() {
           <span class="csui-control__toggle-ui" aria-hidden="true"></span>
         </label>
       </div>
+
+      <div id="${DIAGNOSTICS_ID}" class="csui-control__diagnostics" aria-live="polite" hidden></div>
 
       <div class="csui-control__divider" role="separator" aria-hidden="true"></div>
 
@@ -165,61 +183,173 @@ function getMarkup() {
   `;
 }
 
-function readErrorFlag() {
+function readDiagnostics(scope) {
     try {
-        return localStorage.getItem(STORAGE_KEY_ERROR_FLAG) === 'true';
+        const parsed = JSON.parse(localStorage.getItem(getDiagnosticsStorageKey(scope)) || '[]');
+        if (Array.isArray(parsed)) {
+            const diagnostics = parsed
+                .map((entry) => normalizeDiagnostic(entry?.level, entry?.message))
+                .filter(Boolean);
+            if (diagnostics.length) return diagnostics.slice(-MAX_DIAGNOSTICS);
+        }
     } catch {
-        return false;
+        // ignore
     }
+    return [];
 }
 
-function persistErrorFlag(hasError) {
+function persistDiagnostics(diagnostics, scope) {
     try {
-        localStorage.setItem(STORAGE_KEY_ERROR_FLAG, hasError ? 'true' : 'false');
+        localStorage.setItem(getDiagnosticsStorageKey(scope), JSON.stringify(diagnostics));
     } catch {
         // ignore
     }
 }
 
-function setErrorBadgeVisible(visible, badgeEl) {
+function syncDiagnosticBadge(diagnostics, badgeEl, iconEl) {
     if (!badgeEl) return;
-    if (visible) badgeEl.setAttribute('data-visible', 'true');
-    else badgeEl.removeAttribute('data-visible');
+    if (!diagnostics.length) {
+        badgeEl.removeAttribute('data-visible');
+        badgeEl.removeAttribute('data-severity');
+        return;
+    }
+
+    const severity = diagnostics.some((diagnostic) => diagnostic.level === 'error')
+        ? 'error'
+        : 'warning';
+    badgeEl.setAttribute('data-visible', 'true');
+    badgeEl.setAttribute('data-severity', severity);
+    if (iconEl) iconEl.textContent = severity;
 }
 
-function installGlobalErrorReporter({ errorBadge }) {
+function renderDiagnostics(diagnostics, container, scope) {
+    if (!container) return;
+    container.replaceChildren();
+    container.hidden = !diagnostics.length;
+
+    diagnostics.forEach((diagnostic) => {
+        const item = document.createElement('div');
+        item.className = `csui-control__diagnostic csui-control__diagnostic--${diagnostic.level}`;
+
+        const label = document.createElement('strong');
+        label.textContent = `${getDiagnosticScopeLabel(scope)} ${
+            diagnostic.level === 'warning' ? 'Warning' : 'Error'
+        }`;
+        const message = document.createElement('span');
+        message.textContent = diagnostic.message;
+
+        item.append(label, message);
+        container.appendChild(item);
+    });
+}
+
+function installGlobalErrorReporter({
+    errorBadge,
+    badgeIcon,
+    diagnostics: diagnosticsContainer,
+    diagnosticScope,
+}) {
     const w = window;
     const existing = w.__CSUI__ || {};
+    let diagnostics = readDiagnostics(diagnosticScope);
+
+    const report = (level, value) => {
+        const diagnostic = normalizeDiagnostic(level, value);
+        if (!diagnostic) return;
+
+        const last = diagnostics.at(-1);
+        if (last?.level === diagnostic.level && last.message === diagnostic.message) return;
+
+        diagnostics = [...diagnostics, diagnostic].slice(-MAX_DIAGNOSTICS);
+        persistDiagnostics(diagnostics, diagnosticScope);
+        renderDiagnostics(diagnostics, diagnosticsContainer, diagnosticScope);
+        syncDiagnosticBadge(diagnostics, errorBadge, badgeIcon);
+    };
 
     w.__CSUI__ = {
         ...existing,
         reportError(err) {
-            persistErrorFlag(true);
-            setErrorBadgeVisible(true, errorBadge);
-
-            try {
-                const msg = err?.message
-                    ? String(err.message).slice(0, 200)
-                    : String(err).slice(0, 200);
-                localStorage.setItem('csui-last-error', msg);
-            } catch {
-                // ignore
-            }
+            report('error', err);
+        },
+        reportWarning(warning) {
+            report('warning', warning);
         },
         clearError() {
-            persistErrorFlag(false);
-            setErrorBadgeVisible(false, errorBadge);
-            try {
-                localStorage.removeItem('csui-last-error');
-            } catch {
-                // ignore
-            }
+            diagnostics = [];
+            persistDiagnostics(diagnostics, diagnosticScope);
+            renderDiagnostics(diagnostics, diagnosticsContainer, diagnosticScope);
+            syncDiagnosticBadge(diagnostics, errorBadge, badgeIcon);
         },
     };
+}
+
+function getDiagnosticScope(ctx) {
+    const currentContext = ctx || getCurrentContext();
+    if (currentContext?.isSewerPaymentsChatt) return 'landing';
+    if (currentContext?.isChattWebShare) {
+        return `webshare:${currentContext.pageType || 'other'}`;
+    }
+    return 'other';
+}
+
+function getCurrentContext() {
+    try {
+        return getChattContext(window.location);
+    } catch {
+        return null;
+    }
+}
+
+function getDiagnosticsStorageKey(scope) {
+    return `${STORAGE_KEY_DIAGNOSTICS}:${scope}`;
+}
+
+function getDiagnosticScopeLabel(scope) {
+    const labels = {
+        landing: 'Landing page',
+        'webshare:dashboard': 'Dashboard',
+        'webshare:login': 'Sign-in page',
+        'webshare:forgot-username': 'Username recovery',
+        'webshare:new-user': 'Registration',
+        'webshare:guest-pay': 'Guest payment',
+    };
+    return labels[scope] || 'Extension';
+}
+
+function normalizeDiagnostic(level, value) {
+    const message = value?.message ? String(value.message) : String(value || '');
+    if (!message) return null;
+    return {
+        level: level === 'warning' ? 'warning' : 'error',
+        message: message.replace(/\s+/g, ' ').trim().slice(0, 240),
+    };
+}
+
+function getExtensionVersion() {
+    try {
+        const runtime =
+            typeof chrome !== 'undefined'
+                ? chrome.runtime
+                : typeof browser !== 'undefined'
+                  ? browser.runtime
+                  : null;
+        return runtime?.getManifest?.().version || '0.1.0';
+    } catch {
+        return '0.1.0';
+    }
 }
 
 /** Tiny helpers */
 
 function escapeAttr(url) {
     return String(url).replace(/"/g, '&quot;');
+}
+
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }

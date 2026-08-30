@@ -235,12 +235,7 @@ function moveModernRootToBody(host) {
 }
 
 function failModernDashboard(err) {
-    createLogger().warn('initialization failed; reverting to legacy mode', err);
-    try {
-        window.__CSUI__?.reportError?.(err);
-    } catch {
-        // ignore
-    }
+    createLogger().warn('modern dashboard unavailable; using the original dashboard', err);
     destroyModernDashboard();
 }
 
@@ -275,6 +270,7 @@ function createLogger() {
             if (enabled) console.info(`[CSUI Modern] ${message}`, ...args);
         },
         warn(message, ...args) {
+            window.__CSUI__?.reportWarning?.(args[0]?.message || message);
             if (enabled) console.warn(`[CSUI Modern] ${message}`, ...args);
         },
     };

@@ -152,16 +152,33 @@ html.csui-theme {
         transition:
             opacity var(--chatt-transition-fast),
             transform var(--chatt-transition-fast);
+    }
 
-        svg {
-            display: block;
-            fill: currentColor;
-        }
+    .csui-control__badge-icon {
+        display: block;
+        font-family: 'Material Symbols Rounded';
+        font-size: 0.9rem;
+        font-variation-settings:
+            'FILL' 1,
+            'wght' 500,
+            'GRAD' 0,
+            'opsz' 20;
+        line-height: 1;
     }
 
     .csui-control__badge[data-visible='true'] {
         opacity: 1;
         transform: scale(1);
+    }
+
+    .csui-control__badge[data-severity='warning'] {
+        background-color: var(--chatt-color-accent);
+        color: var(--chatt-color-primary-dark);
+    }
+
+    .csui-control__badge[data-severity='error'] {
+        background-color: var(--chatt-color-danger);
+        color: #ffffff;
     }
 
     // -----------------------------------------
@@ -228,14 +245,51 @@ html.csui-theme {
     }
 
     .csui-control__title {
+        display: flex;
+        align-items: baseline;
+        gap: 0.4rem;
         font-size: 0.95rem;
         font-weight: 700;
         color: var(--chatt-color-primary-dark);
         min-width: 0;
     }
 
+    .csui-control__version {
+        color: var(--chatt-color-text-muted);
+        font-size: 0.75rem;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
     .csui-control__row {
         margin: 0.25rem 0 0.75rem;
+    }
+
+    .csui-control__diagnostics {
+        display: grid;
+        gap: 0.45rem;
+        margin: -0.15rem 0 0.75rem;
+    }
+
+    .csui-control__diagnostic {
+        display: grid;
+        gap: 0.12rem;
+        padding: 0.55rem 0.6rem;
+        border: 1px solid var(--chatt-color-border-subtle);
+        border-radius: var(--chatt-radius-sm);
+        color: var(--chatt-color-text);
+        font-size: 0.78rem;
+        line-height: 1.35;
+    }
+
+    .csui-control__diagnostic--warning {
+        border-color: #e5b56b;
+        background: #fff8e9;
+    }
+
+    .csui-control__diagnostic--error {
+        border-color: #e3a09b;
+        background: #fff1ef;
     }
 
     .csui-control__divider {

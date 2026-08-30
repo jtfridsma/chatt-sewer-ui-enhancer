@@ -11,7 +11,7 @@ function init() {
 
         if (!ctx.isRelevant) return;
 
-        addThemeToggle();
+        addThemeToggle(ctx);
         applyThemeClasses(ctx);
         setupModernDashboardIntegration(ctx);
     } catch (err) {
