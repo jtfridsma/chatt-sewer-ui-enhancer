@@ -297,7 +297,7 @@ export const DASHBOARD_STYLES = `
             max-width: 240px;
             color: var(--dashboard-heading);
             font-size: 0.98rem;
-            font-weight: 700;
+            font-weight: 600;
             line-height: 1.25;
             overflow-wrap: anywhere;
         }
@@ -451,7 +451,7 @@ export const DASHBOARD_STYLES = `
             margin: 0;
             color: var(--dashboard-text);
             font-size: 0.94rem;
-            font-weight: 700;
+            font-weight: 600;
             overflow-wrap: anywhere;
         }
 
@@ -498,7 +498,7 @@ export const DASHBOARD_STYLES = `
             cursor: pointer;
             min-height: 42px;
             padding: 0.58rem 0.9rem;
-            font-weight: 700;
+            font-weight: 600;
             white-space: nowrap;
         }
 
@@ -550,7 +550,7 @@ export const DASHBOARD_STYLES = `
             border-radius: 999px;
             padding: 0.18rem 0.55rem;
             font-size: 0.74rem;
-            font-weight: 700;
+            font-weight: 600;
             line-height: 1;
             white-space: nowrap;
         }
@@ -607,7 +607,7 @@ export const DASHBOARD_STYLES = `
             border-radius: 8px;
             min-height: 40px;
             padding: 0.62rem 0.9rem;
-            font-weight: 700;
+            font-weight: 600;
             cursor: pointer;
         }
 
@@ -749,7 +749,7 @@ export const DASHBOARD_STYLES = `
         .setting-toggle__title {
             color: var(--dashboard-heading);
             font-size: 0.9rem;
-            font-weight: 700;
+            font-weight: 600;
         }
 
         .setting-toggle__hint {
@@ -848,7 +848,7 @@ export const DASHBOARD_STYLES = `
             margin: 0;
             color: var(--dashboard-text-muted);
             font-size: 0.86rem;
-            font-weight: 700;
+            font-weight: 600;
         }
 
         .billing-settings {
@@ -1000,7 +1000,7 @@ export const DASHBOARD_STYLES = `
         }
 
         .meter-tab__label {
-            font-weight: 700;
+            font-weight: 600;
             white-space: nowrap;
         }
 

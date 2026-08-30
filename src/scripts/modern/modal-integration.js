@@ -29,6 +29,7 @@ export function setupModernModalIntegration() {
         subtree: true,
         attributes: true,
         attributeFilter: ['class', 'style'],
+        characterData: true,
     });
     sync();
 
@@ -54,6 +55,7 @@ export function setupModernModalIntegration() {
 function canAffectModal(record) {
     const target = record.target;
     if (target instanceof Element && target.closest('.modal')) return true;
+    if (record.type === 'characterData') return target.parentElement?.closest('.modal') !== null;
     if (record.type !== 'childList') return false;
     return [...record.addedNodes, ...record.removedNodes].some(
         (node) =>
@@ -83,6 +85,51 @@ function tagModal(modal) {
     if (title && title.getAttribute('data-csui-modal-icon') !== getModalIcon(kind)) {
         title.setAttribute('data-csui-modal-icon', getModalIcon(kind));
     }
+
+    if (kind === 'payment') enhancePaymentModal(modal);
+}
+
+function enhancePaymentModal(modal) {
+    const footer = modal.querySelector('.modal-footer');
+    const total = footer?.querySelector(':scope > p');
+    const amount = total?.textContent?.match(/\d[\d,]*(?:\.\d{1,2})?/)?.[0];
+    if (amount) {
+        total.setAttribute('data-csui-payment-total', amount);
+    } else {
+        total?.removeAttribute('data-csui-payment-total');
+    }
+
+    const labels = [
+        ['payToken()', 'Pay with stored method'],
+        ['payNonToken()', 'Pay with new method'],
+        ['forgetToken()', 'Forget stored method'],
+    ];
+    labels.forEach(([action, label]) => {
+        footer
+            ?.querySelector(`:scope > .btn[ng-click='${action}']`)
+            ?.setAttribute('data-csui-payment-label', label);
+    });
+
+    reorderPaymentActions(footer);
+}
+
+function reorderPaymentActions(footer) {
+    if (!footer) return;
+
+    const actionOrder = ['payToken()', 'cancel()', 'payNonToken()', 'forgetToken()'];
+    const actions = actionOrder
+        .map((action) => footer.querySelector(`:scope > .btn[ng-click='${action}']`))
+        .filter(Boolean);
+    const currentOrder = Array.from(footer.querySelectorAll(':scope > .btn'));
+
+    if (
+        actions.length === currentOrder.length &&
+        actions.every((action, index) => action === currentOrder[index])
+    ) {
+        return;
+    }
+
+    actions.forEach((action) => footer.append(action));
 }
 
 function getModalKind(title) {

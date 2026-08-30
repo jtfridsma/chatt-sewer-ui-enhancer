@@ -43,17 +43,42 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
     }
 
     .modal-backdrop {
+        // Bootstrap normally establishes the fixed overlay. Keep the dashboard
+        // usable when the portal stylesheet fails to load or is replaced.
+        position: fixed;
+        inset: 0;
+        z-index: 1040;
         background: var(--csui-dashboard-backdrop);
+        opacity: 0;
+        transition: opacity 150ms linear;
+    }
 
-        &.in {
-            opacity: 0.42;
-        }
+    &.csui-modern-modal-open .modal-backdrop.in {
+        opacity: 0.42;
     }
 
     .modal {
+        // These are Bootstrap's essential modal layout rules, repeated here as
+        // a narrow fallback for the enhanced dashboard only.
+        position: fixed;
+        inset: 0;
+        z-index: 1050;
+        overflow-x: hidden;
+        overflow-y: auto;
+        outline: 0;
+        opacity: 0;
+        transition: opacity 150ms linear;
         color: var(--csui-dashboard-text);
         font-family: var(--chatt-font-sans);
         letter-spacing: 0;
+
+        &.in {
+            opacity: 1;
+        }
+    }
+
+    body.modal-open {
+        overflow: hidden;
     }
 
     .modal-dialog {
@@ -88,7 +113,7 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
         padding: 1rem 1.15rem;
         border-bottom: 1px solid var(--csui-dashboard-border);
         background: var(--csui-dashboard-surface-muted);
-        font-weight: 700;
+        font-weight: 600;
     }
 
     .modal-title {
@@ -102,9 +127,10 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
         color: var(--csui-dashboard-backdrop);
         font-family: var(--chatt-font-heading);
         font-size: 1.15rem;
-        font-weight: 700;
+        font-weight: 600;
         line-height: 1.25;
         text-align: left;
+        text-transform: capitalize;
         overflow-wrap: anywhere;
 
         &::before {
@@ -175,6 +201,10 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
         padding: 1.1rem 1.15rem;
     }
 
+    .modal-content > form > .modal-footer {
+        margin: 0 -1.15rem -1.1rem;
+    }
+
     .modal .form-group {
         float: none !important;
         width: 100% !important;
@@ -187,8 +217,9 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
         margin: 0 0 0.35rem;
         color: var(--csui-dashboard-text);
         font-size: 0.9rem;
-        font-weight: 750;
+        font-weight: 600;
         line-height: 1.35;
+        text-align: left;
     }
 
     .modal .form-control,
@@ -245,7 +276,7 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
         background: var(--csui-dashboard-surface-muted);
         color: var(--csui-dashboard-text-muted);
         font-size: 0.76rem;
-        font-weight: 850;
+        font-weight: 600;
         text-align: left;
         text-transform: uppercase;
     }
@@ -275,20 +306,31 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
         p {
             margin-right: auto;
             color: var(--csui-dashboard-backdrop);
-            font-weight: 800;
+            font-weight: 600;
         }
     }
 
     .modal .btn {
+        appearance: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: auto !important;
+        min-width: 0 !important;
         min-height: 2.5rem;
         margin: 0;
         padding: 0.62rem 0.9rem;
+        border: 1px solid transparent;
         border-radius: var(--csui-dashboard-radius);
         clip-path: none;
+        box-shadow: none;
+        cursor: pointer;
         font-family: var(--chatt-font-sans);
         font-size: 0.9rem;
-        font-weight: 750;
+        font-weight: 600;
         line-height: 1.2;
+        text-decoration: none;
+        white-space: nowrap;
         transition:
             background-color var(--chatt-transition-fast),
             border-color var(--chatt-transition-fast),
@@ -329,6 +371,186 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
         opacity: 0.55;
     }
 
+    .modal[data-csui-modal-kind='payment'] {
+        table {
+            width: min(100%, 46rem);
+            margin: 0 auto;
+            border: 1px solid var(--csui-dashboard-border);
+            border-radius: var(--csui-dashboard-radius);
+            background: var(--csui-dashboard-surface);
+            box-shadow: none;
+        }
+
+        th {
+            padding: 0.72rem 0.8rem;
+            border-bottom-color: var(--csui-dashboard-border);
+            background: var(--csui-dashboard-surface-muted);
+            color: var(--csui-dashboard-text-muted);
+            font-size: 0.74rem;
+            font-weight: 600;
+            letter-spacing: normal;
+        }
+
+        td {
+            padding: 0.75rem 0.8rem;
+            background: transparent;
+        }
+
+        tbody tr + tr td {
+            border-top: 1px solid var(--csui-dashboard-row-border);
+        }
+
+        td:first-child {
+            color: var(--csui-dashboard-backdrop);
+            font-size: 0.86rem;
+            font-weight: 600;
+        }
+
+        td:nth-child(2) {
+            color: var(--csui-dashboard-text-muted);
+        }
+
+        td:last-child {
+            width: 12rem;
+        }
+
+        .form-group {
+            margin: 0;
+        }
+
+        input.form-control {
+            min-height: 2.5rem;
+            font-variant-numeric: tabular-nums;
+            text-align: right;
+        }
+
+        .form-group > div:not(.help-block) {
+            margin-top: 0.38rem;
+            color: var(--csui-dashboard-text-muted);
+            font-size: 0.76rem;
+            line-height: 1.35;
+        }
+
+        .modal-footer {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            padding: 0.95rem 1.15rem;
+            column-gap: 0.65rem;
+            justify-content: flex-end;
+            row-gap: 0.2rem;
+        }
+
+        .modal-footer > p {
+            flex: 1 1 auto;
+            margin: 0;
+        }
+
+        .modal-footer::after {
+            flex: 0 0 100%;
+            order: 3;
+            height: 0;
+            content: '';
+        }
+
+        .modal-footer > p[data-csui-payment-total] {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.08rem;
+            font-size: 0;
+            text-align: left;
+        }
+
+        .modal-footer > p[data-csui-payment-total]::before {
+            content: 'Total due';
+            color: var(--csui-dashboard-text-muted);
+            font-family: var(--chatt-font-sans);
+            font-size: 0.76rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .modal-footer > p[data-csui-payment-total]::after {
+            content: '$' attr(data-csui-payment-total);
+            color: var(--csui-dashboard-backdrop);
+            font-family: var(--chatt-font-heading);
+            font-size: 1.45rem;
+            font-weight: 600;
+            line-height: 1.05;
+        }
+
+        .modal-footer > .btn[ng-click='payToken()'] {
+            order: 1;
+        }
+
+        .modal-footer > .btn[ng-click='cancel()'] {
+            order: 2;
+        }
+
+        .modal-footer > .btn[ng-click='payNonToken()'] {
+            order: 4;
+        }
+
+        .modal-footer > .btn[ng-click='forgetToken()'] {
+            order: 5;
+        }
+
+        .modal-footer > .btn[data-csui-payment-label] {
+            font-size: 0;
+        }
+
+        .modal-footer > .btn[data-csui-payment-label]::after {
+            content: attr(data-csui-payment-label);
+            font-size: 0.9rem;
+        }
+
+        .modal-footer > .btn[ng-click='payNonToken()'],
+        .modal-footer > .btn[ng-click='forgetToken()'] {
+            min-height: 2.5rem;
+            height: auto !important;
+            padding: 0.5rem 0.65rem;
+            border-color: transparent;
+            background: transparent;
+            color: var(--csui-dashboard-text-muted);
+            font-weight: 500;
+        }
+
+        .modal-footer > .btn[ng-click='payNonToken()']::before,
+        .modal-footer > .btn[ng-click='forgetToken()']::before {
+            margin-right: 0.28rem;
+            font-family: 'Material Symbols Rounded';
+            font-feature-settings: 'liga';
+            font-size: 1rem;
+            font-variation-settings:
+                'FILL' 0,
+                'wght' 400,
+                'GRAD' 0,
+                'opsz' 20;
+            line-height: 1;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .modal-footer > .btn[ng-click='payNonToken()']::before {
+            content: 'payments';
+        }
+
+        .modal-footer > .btn[ng-click='forgetToken()']::before {
+            content: 'block';
+        }
+
+        .modal-footer > .btn[ng-click='payNonToken()']:hover,
+        .modal-footer > .btn[ng-click='payNonToken()']:focus,
+        .modal-footer > .btn[ng-click='forgetToken()']:hover,
+        .modal-footer > .btn[ng-click='forgetToken()']:focus {
+            border-color: transparent;
+            background: transparent;
+            text-decoration: underline;
+        }
+    }
+
     @media (max-width: 48rem) {
         .modal-dialog {
             margin: 0.75rem auto;
@@ -351,6 +573,18 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
 
             .btn {
                 flex: 1 1 12rem;
+            }
+        }
+
+        .modal[data-csui-modal-kind='payment'] .modal-footer {
+            row-gap: 0.45rem;
+
+            > p {
+                flex-basis: 100%;
+            }
+
+            .btn {
+                flex: initial;
             }
         }
     }
