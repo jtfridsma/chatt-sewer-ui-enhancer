@@ -215,9 +215,11 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
     .modal label {
         display: block;
         margin: 0 0 0.35rem;
-        color: var(--csui-dashboard-text);
-        font-size: 0.9rem;
-        font-weight: 600;
+        color: var(--csui-dashboard-text-muted);
+        font-size: 0.74rem;
+        font-weight: 400;
+        line-height: 1.35;
+        text-transform: capitalize;
         line-height: 1.35;
         text-align: left;
     }
@@ -372,46 +374,125 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
     }
 
     .modal[data-csui-modal-kind='payment'] {
-        table {
-            width: min(100%, 46rem);
-            margin: 0 auto;
-            border: 1px solid var(--csui-dashboard-border);
-            border-radius: var(--csui-dashboard-radius);
-            background: var(--csui-dashboard-surface);
+        table[data-csui-payment-form] {
+            display: block;
+            width: 100%;
+            margin: 0;
+            border: 0;
+            background: transparent;
             box-shadow: none;
         }
 
-        th {
-            padding: 0.72rem 0.8rem;
-            border-bottom-color: var(--csui-dashboard-border);
-            background: var(--csui-dashboard-surface-muted);
-            color: var(--csui-dashboard-text-muted);
-            font-size: 0.74rem;
-            font-weight: 600;
-            letter-spacing: normal;
+        table[data-csui-payment-form] tbody {
+            display: grid;
+            gap: 0.75rem;
         }
 
-        td {
-            padding: 0.75rem 0.8rem;
+        table[data-csui-payment-form] tbody > tr:first-child {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+        }
+
+        table[data-csui-payment-form] tr[data-csui-payment-row] {
+            display: grid;
+            grid-template-areas:
+                'address payment'
+                'account payment';
+            grid-template-columns: minmax(0, 1fr) minmax(11rem, 0.7fr);
+            column-gap: 1.5rem;
+            row-gap: 0.9rem;
+            align-items: start;
+            padding: 0.9rem 0.75rem 0.9rem 1rem;
+            border: 1px solid var(--csui-dashboard-border);
+            border-radius: var(--csui-dashboard-radius);
+            background: var(--csui-dashboard-surface);
+        }
+
+        table[data-csui-payment-form] td {
+            display: block;
+            margin-left: 0;
+            padding: 0;
+            border: 0;
             background: transparent;
         }
 
-        tbody tr + tr td {
-            border-top: 1px solid var(--csui-dashboard-row-border);
-        }
-
-        td:first-child {
-            color: var(--csui-dashboard-backdrop);
-            font-size: 0.86rem;
-            font-weight: 600;
-        }
-
-        td:nth-child(2) {
+        table[data-csui-payment-form] td::before {
+            display: block;
+            margin-bottom: 0.28rem;
             color: var(--csui-dashboard-text-muted);
+            font-size: 0.74rem;
+            font-weight: 400;
+            line-height: 1.35;
         }
 
-        td:last-child {
-            width: 12rem;
+        table[data-csui-payment-form] td:first-child {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            align-items: end;
+            column-gap: 1rem;
+            grid-area: account;
+        }
+
+        table[data-csui-payment-form] td:nth-child(2) {
+            grid-area: address;
+            color: var(--csui-dashboard-text);
+            font-size: 0.94rem;
+            font-weight: 600;
+            line-height: 1.35;
+        }
+
+        table[data-csui-payment-form] td:nth-child(2)::before {
+            content: 'Service Address';
+        }
+
+        table[data-csui-payment-form] td:last-child::before {
+            content: 'Amount to Pay';
+        }
+
+        table[data-csui-payment-form] td:last-child {
+            grid-area: payment;
+            align-self: end;
+        }
+
+        .csui-payment-amount-due {
+            display: grid;
+            flex: 0 0 auto;
+            gap: 0.08rem;
+            margin: 0;
+        }
+
+        .csui-payment-account-value {
+            display: grid;
+            gap: 0.08rem;
+            color: var(--csui-dashboard-text);
+            font-size: 0.94rem;
+            font-weight: 600;
+            line-height: 1.35;
+        }
+
+        .csui-payment-account-value::before,
+        .csui-payment-amount-due__label,
+        .csui-payment-total-due__label {
+            color: var(--csui-dashboard-text-muted);
+            font-size: 0.74rem;
+            font-weight: 400;
+            line-height: 1.35;
+        }
+
+        .csui-payment-account-value::before {
+            content: 'Account';
+        }
+
+        .csui-payment-amount-due__value {
+            color: var(--csui-dashboard-text);
+            font-size: 0.94rem;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            line-height: 1.35;
         }
 
         .form-group {
@@ -429,6 +510,8 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
             color: var(--csui-dashboard-text-muted);
             font-size: 0.76rem;
             line-height: 1.35;
+            overflow-wrap: anywhere;
+            white-space: normal;
         }
 
         .modal-footer {
@@ -441,9 +524,30 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
             row-gap: 0.2rem;
         }
 
-        .modal-footer > p {
+        .modal-footer > .csui-payment-totals {
+            display: grid;
             flex: 1 1 auto;
+            gap: 0.32rem;
+            margin: 0 0.75rem 0 0;
+        }
+
+        .modal-footer > .csui-payment-totals > p {
             margin: 0;
+        }
+
+        .modal-footer .csui-payment-total-due {
+            display: inline-flex;
+            align-items: flex-start;
+            gap: 0.3rem;
+            line-height: 1.35;
+        }
+
+        .csui-payment-total-due__value {
+            color: var(--csui-dashboard-text-muted);
+            font-size: 0.74rem;
+            font-weight: 400;
+            font-variant-numeric: tabular-nums;
+            line-height: 1.35;
         }
 
         .modal-footer::after {
@@ -453,7 +557,7 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
             content: '';
         }
 
-        .modal-footer > p[data-csui-payment-total] {
+        .modal-footer > .csui-payment-totals > p[data-csui-payment-total] {
             display: flex;
             flex-direction: column;
             align-items: flex-start;
@@ -462,21 +566,20 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
             text-align: left;
         }
 
-        .modal-footer > p[data-csui-payment-total]::before {
-            content: 'Total due';
+        .modal-footer > .csui-payment-totals > p[data-csui-payment-total]::before {
+            content: 'Total Amount to Pay';
             color: var(--csui-dashboard-text-muted);
             font-family: var(--chatt-font-sans);
-            font-size: 0.76rem;
-            font-weight: 600;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
+            font-size: 0.74rem;
+            font-weight: 400;
+            line-height: 1.35;
         }
 
-        .modal-footer > p[data-csui-payment-total]::after {
+        .modal-footer > .csui-payment-totals > p[data-csui-payment-total]::after {
             content: '$' attr(data-csui-payment-total);
             color: var(--csui-dashboard-backdrop);
             font-family: var(--chatt-font-heading);
-            font-size: 1.45rem;
+            font-size: 1.65rem;
             font-weight: 600;
             line-height: 1.05;
         }
@@ -503,14 +606,18 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
 
         .modal-footer > .btn[data-csui-payment-label]::after {
             content: attr(data-csui-payment-label);
+            font-size: 0.78rem;
+        }
+
+        .modal-footer > .btn[ng-click='payToken()'][data-csui-payment-label]::after {
             font-size: 0.9rem;
         }
 
         .modal-footer > .btn[ng-click='payNonToken()'],
         .modal-footer > .btn[ng-click='forgetToken()'] {
-            min-height: 2.5rem;
+            min-height: 2rem;
             height: auto !important;
-            padding: 0.5rem 0.65rem;
+            padding: 0.22rem 0.35rem;
             border-color: transparent;
             background: transparent;
             color: var(--csui-dashboard-text-muted);
@@ -551,6 +658,13 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
         }
     }
 
+    .modal[data-csui-modal-variant='remember-payment'] {
+        .modal-footer.form-group {
+            margin: 0 !important;
+            padding: 0.95rem 1.15rem !important;
+        }
+    }
+
     @media (max-width: 48rem) {
         .modal-dialog {
             margin: 0.75rem auto;
@@ -568,6 +682,23 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
             white-space: nowrap;
         }
 
+        .modal[data-csui-modal-kind='payment'] table[data-csui-payment-form] {
+            overflow: visible;
+            white-space: normal;
+        }
+
+        .modal[data-csui-modal-kind='payment']
+            table[data-csui-payment-form]
+            tr[data-csui-payment-row] {
+            grid-template-areas:
+                'address'
+                'account'
+                'payment';
+            grid-template-columns: 1fr;
+            gap: 0.72rem;
+            padding: 0.85rem;
+        }
+
         .modal-footer {
             justify-content: stretch;
 
@@ -579,8 +710,9 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
         .modal[data-csui-modal-kind='payment'] .modal-footer {
             row-gap: 0.45rem;
 
-            > p {
+            > .csui-payment-totals {
                 flex-basis: 100%;
+                margin-right: 0;
             }
 
             .btn {
