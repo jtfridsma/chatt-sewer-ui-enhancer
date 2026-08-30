@@ -52,6 +52,9 @@ export function setupModernModalIntegration() {
                     .querySelectorAll("[data-csui-generated='payment-total-due']")
                     .forEach((detail) => detail.remove());
                 modal
+                    .querySelectorAll("[data-csui-generated='payment-total-notice']")
+                    .forEach((notice) => notice.remove());
+                modal
                     .querySelectorAll("[data-csui-generated='payment-account-value']")
                     .forEach((value) => {
                         value.before(...value.childNodes);
@@ -63,6 +66,12 @@ export function setupModernModalIntegration() {
                         const total = summary.querySelector(':scope > p');
                         if (total) summary.before(total);
                         summary.remove();
+                    });
+                modal
+                    .querySelectorAll("[data-csui-generated='payment-actions']")
+                    .forEach((actions) => {
+                        actions.before(...actions.childNodes);
+                        actions.remove();
                     });
                 modal.querySelectorAll('[data-csui-payment-form]').forEach((table) => {
                     table.removeAttribute('data-csui-payment-form');
@@ -126,42 +135,42 @@ function enhancePaymentModal(modal) {
     const total = footer?.querySelector('p');
     const amount = total?.textContent?.match(/\d[\d,]*(?:\.\d{1,2})?/)?.[0];
     if (amount) {
-        total.setAttribute('data-csui-payment-total', amount);
+        setAttributeIfChanged(total, 'data-csui-payment-total', amount);
     } else {
         total?.removeAttribute('data-csui-payment-total');
     }
-    syncPaymentTotalDue(footer, total, totalDue);
+    syncPaymentTotalDue(footer, total, totalDue, amount);
 
+    const actions = ensurePaymentActionGroup(footer);
     const labels = [
         ['payToken()', 'Pay with stored method'],
         ['payNonToken()', 'Pay with new method'],
         ['forgetToken()', 'Forget stored method'],
     ];
     labels.forEach(([action, label]) => {
-        footer
-            ?.querySelector(`:scope > .btn[ng-click='${action}']`)
-            ?.setAttribute('data-csui-payment-label', label);
+        const button = actions?.querySelector(`:scope > .btn[ng-click='${action}']`);
+        if (button) setAttributeIfChanged(button, 'data-csui-payment-label', label);
     });
 
-    reorderPaymentActions(footer);
+    reorderPaymentActions(actions);
 }
 
 function enhancePaymentForm(modal) {
     const table = modal.querySelector('form > table');
     if (!table) return null;
 
-    table.setAttribute('data-csui-payment-form', 'true');
+    setAttributeIfChanged(table, 'data-csui-payment-form', 'true');
     let totalDue = 0;
     let hasDue = false;
     table.querySelectorAll('tr[ng-repeat]').forEach((row) => {
-        row.setAttribute('data-csui-payment-row', 'true');
+        setAttributeIfChanged(row, 'data-csui-payment-row', 'true');
         const input = row.querySelector("input[name='amtToPay']");
         const initialDue = row.getAttribute('data-csui-payment-due') || input?.value || '';
         const amount = parseCurrencyAmount(initialDue);
         if (amount === null) return;
 
         const formattedAmount = formatCurrency(amount);
-        row.setAttribute('data-csui-payment-due', formattedAmount);
+        setAttributeIfChanged(row, 'data-csui-payment-due', formattedAmount);
         ensurePaymentAmountDue(row, formattedAmount);
         totalDue += amount;
         hasDue = true;
@@ -192,7 +201,7 @@ function ensurePaymentAmountDue(row, amount) {
     }
 
     const value = detail.querySelector('.csui-payment-amount-due__value');
-    if (value) value.textContent = `$${amount}`;
+    if (value) setTextIfChanged(value, `$${amount}`);
 }
 
 function ensurePaymentAccountValue(accountCell) {
@@ -208,12 +217,13 @@ function ensurePaymentAccountValue(accountCell) {
     accountCell.prepend(value);
 }
 
-function syncPaymentTotalDue(footer, total, amount) {
+function syncPaymentTotalDue(footer, total, amount, paymentAmount) {
     if (!footer) return;
 
     let detail = footer.querySelector("[data-csui-generated='payment-total-due']");
     if (!amount) {
         detail?.remove();
+        footer.querySelector("[data-csui-generated='payment-total-notice']")?.remove();
         return;
     }
 
@@ -236,13 +246,55 @@ function syncPaymentTotalDue(footer, total, amount) {
         const value = document.createElement('span');
         value.className = 'csui-payment-total-due__value';
         detail.append(label, value);
-        summary.append(detail);
     }
 
-    if (total && total.parentElement !== summary) summary.append(total);
+    placePaymentSummaryItem(summary, total);
+    placePaymentSummaryItem(summary, detail, total);
+    syncPaymentDifferenceNotice(summary, amount, paymentAmount, detail);
 
     const value = detail.querySelector('.csui-payment-total-due__value');
-    if (value) value.textContent = `$${amount}`;
+    if (value) setTextIfChanged(value, `$${amount}`);
+}
+
+function syncPaymentDifferenceNotice(summary, totalDue, totalPayment, previous) {
+    let notice = summary.querySelector("[data-csui-generated='payment-total-notice']");
+    const due = parseCurrencyAmount(totalDue);
+    const payment = parseCurrencyAmount(totalPayment);
+    const difference = payment === null || due === null ? null : payment - due;
+
+    if (difference === null || Math.abs(difference) < 0.005) {
+        notice?.remove();
+        return;
+    }
+
+    if (!notice) {
+        notice = document.createElement('span');
+        notice.className = 'csui-payment-total-notice';
+        notice.setAttribute('data-csui-generated', 'payment-total-notice');
+    }
+
+    const direction = difference > 0 ? 'more than' : 'less than';
+    setTextIfChanged(
+        notice,
+        `Amount to pay is $${formatCurrency(Math.abs(difference))} ${direction} total due.`
+    );
+    placePaymentSummaryItem(summary, notice, previous);
+}
+
+function placePaymentSummaryItem(parent, item, previous = null) {
+    if (!item) return;
+
+    const reference = previous ? previous.nextSibling : parent.firstChild;
+    if (item.parentNode === parent && item === reference) return;
+    parent.insertBefore(item, reference);
+}
+
+function setAttributeIfChanged(element, name, value) {
+    if (element.getAttribute(name) !== value) element.setAttribute(name, value);
+}
+
+function setTextIfChanged(element, value) {
+    if (element.textContent !== value) element.textContent = value;
 }
 
 function parseCurrencyAmount(value) {
@@ -260,23 +312,40 @@ function formatCurrency(value) {
     });
 }
 
-function reorderPaymentActions(footer) {
-    if (!footer) return;
+function ensurePaymentActionGroup(footer) {
+    if (!footer) return null;
+
+    let actions = footer.querySelector("[data-csui-generated='payment-actions']");
+    if (!actions) {
+        const buttons = footer.querySelectorAll(':scope > .btn');
+        if (!buttons.length) return null;
+
+        actions = document.createElement('div');
+        actions.className = 'csui-payment-actions';
+        actions.setAttribute('data-csui-generated', 'payment-actions');
+        footer.append(actions);
+        buttons.forEach((button) => actions.append(button));
+    }
+    return actions;
+}
+
+function reorderPaymentActions(actionContainer) {
+    if (!actionContainer) return;
 
     const actionOrder = ['payToken()', 'cancel()', 'payNonToken()', 'forgetToken()'];
-    const actions = actionOrder
-        .map((action) => footer.querySelector(`:scope > .btn[ng-click='${action}']`))
+    const orderedActions = actionOrder
+        .map((action) => actionContainer.querySelector(`:scope > .btn[ng-click='${action}']`))
         .filter(Boolean);
-    const currentOrder = Array.from(footer.querySelectorAll(':scope > .btn'));
+    const currentOrder = Array.from(actionContainer.querySelectorAll(':scope > .btn'));
 
     if (
-        actions.length === currentOrder.length &&
-        actions.every((action, index) => action === currentOrder[index])
+        orderedActions.length === currentOrder.length &&
+        orderedActions.every((action, index) => action === currentOrder[index])
     ) {
         return;
     }
 
-    actions.forEach((action) => footer.append(action));
+    orderedActions.forEach((action) => actionContainer.append(action));
 }
 
 function getModalKind(title) {
