@@ -140,7 +140,7 @@ function getMarkup() {
       id="${LAUNCHER_ID}"
       class="csui-control__launcher"
       type="button"
-      aria-label="Chattanooga Sewer UI Enhancer settings"
+      aria-label="Chatt Sewer UI settings"
       aria-haspopup="dialog"
       aria-expanded="false"
     >
@@ -153,18 +153,14 @@ function getMarkup() {
       id="${PANEL_ID}"
       class="csui-control__panel"
       role="dialog"
-      aria-label="Chattanooga Sewer UI Enhancer"
+      aria-label="Chatt Sewer UI"
     >
       <div class="csui-control__header">
         <div class="csui-control__title">
-          <span>Chattanooga Sewer UI Enhancer</span>
+          <span>Chatt Sewer UI</span>
           <span class="csui-control__version">v${escapeHtml(version)}</span>
         </div>
-      </div>
-
-      <div class="csui-control__row">
-        <label class="csui-control__toggle">
-          <span class="csui-control__toggle-label">Enable enhancements</span>
+        <label class="csui-control__toggle" aria-label="Enable enhancements">
           <input id="${TOGGLE_ID}" type="checkbox" />
           <span class="csui-control__toggle-ui" aria-hidden="true"></span>
         </label>
@@ -232,7 +228,9 @@ function syncDiagnosticBadge(diagnostics, badgeEl, iconEl) {
 function renderDiagnostics(diagnostics, container, scope) {
     if (!container) return;
     container.replaceChildren();
-    container.hidden = !diagnostics.length;
+    const isEmpty = !diagnostics.length;
+    container.hidden = isEmpty;
+    container.style.display = isEmpty ? 'none' : '';
 
     diagnostics.forEach((diagnostic) => {
         const item = document.createElement('div');

@@ -155,7 +155,7 @@ function getWebShareTitleSuffix(ctx) {
         'forgot-username': 'Forgot Username',
         'new-user': 'Create Account',
         'guest-pay': 'Guest Pay',
-        dashboard: 'Account Dashboard',
+        dashboard: 'Dashboard',
     };
 
     return defaults[ctx.pageType] ?? null;

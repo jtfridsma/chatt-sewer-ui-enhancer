@@ -9,7 +9,7 @@ A focused Chrome extension that transforms Chattanooga's legacy sewer payment po
     - `https://share.dwcorp.com/WebShare/*` (scoped to the Chattanooga tenant via query params)
 - Uses scoped CSS (`html.csui-theme`) to avoid leaking styles outside the target pages.
 - Keeps source in `src/` and compiled assets in `public/`.
-- Adds an accessible in-page toggle (top-right) labeled “Chattanooga Sewer UI Enhancer”.
+- Adds an accessible in-page toggle (top-right) labeled “Chatt Sewer UI”.
 
 ## Quick start (Chrome / Chromium)
 

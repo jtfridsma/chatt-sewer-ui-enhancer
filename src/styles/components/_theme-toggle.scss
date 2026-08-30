@@ -11,6 +11,8 @@ html.csui-theme {
         position: fixed;
         top: 1rem;
         right: 1rem;
+        width: 44px;
+        height: 44px;
         z-index: 1000;
         pointer-events: auto;
         user-select: none;
@@ -20,6 +22,16 @@ html.csui-theme {
                 transition: none !important;
                 animation: none !important;
             }
+        }
+    }
+
+    // Keep the launcher aligned to the dashboard header in either theme state.
+    // This matches the dashboard's desktop/mobile navigation breakpoint.
+    &.csui-webshare.csui-webshare-dashboard .csui-control {
+        top: 1.65rem;
+
+        @media (max-width: 720px) {
+            top: 0.875rem;
         }
     }
 
@@ -44,7 +56,6 @@ html.csui-theme {
         background-color: var(--chatt-color-primary);
         color: #ffffff;
 
-        box-shadow: var(--chatt-shadow-soft);
         cursor: pointer;
 
         position: absolute;
@@ -52,23 +63,18 @@ html.csui-theme {
         right: 0;
         z-index: 3; // stays above panel
 
-        transition:
-            transform var(--chatt-transition-fast),
-            box-shadow var(--chatt-transition-fast),
-            background-color var(--chatt-transition-fast);
+        transition: background-color var(--chatt-transition-fast);
 
         background-image: none;
         text-decoration: none;
         line-height: 1;
 
         &:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 10px 22px rgba(15, 23, 42, 0.18);
+            background-color: var(--chatt-color-primary-dark);
         }
 
         &:active {
-            transform: translateY(0);
-            box-shadow: var(--chatt-shadow-soft);
+            background-color: var(--chatt-color-primary-dark);
         }
 
         &:focus-visible {
@@ -182,14 +188,13 @@ html.csui-theme {
     }
 
     // -----------------------------------------
-    // Panel (popover) - floats under/left of button
+    // Panel (popover) - sits below and right-aligned with the launcher.
     // -----------------------------------------
     .csui-control__panel {
         position: absolute;
 
-        // Panel is offset so the button appears slightly above/right of it
-        top: 1rem;
-        right: 1rem;
+        top: calc(100% + 0.75rem);
+        right: 0;
 
         width: 320px;
         max-width: calc(100vw - 2rem);
@@ -217,6 +222,20 @@ html.csui-theme {
         transition:
             opacity var(--chatt-transition-fast),
             transform var(--chatt-transition-fast);
+
+        &::before {
+            content: '';
+            position: absolute;
+            top: -7px;
+            right: 15px;
+            width: 12px;
+            height: 12px;
+            border-top: 1px solid var(--chatt-color-border-subtle);
+            border-left: 1px solid var(--chatt-color-border-subtle);
+            border-top-left-radius: 2px;
+            background: var(--chatt-color-surface);
+            transform: rotate(45deg);
+        }
     }
 
     .csui-control[data-csui-open='true'] .csui-control__panel {
@@ -233,21 +252,18 @@ html.csui-theme {
     // Panel content
     // --------------------
     .csui-control__header {
-        display: block;
-        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
         min-width: 0;
-
-        // Only the header gets “safe space” for the overlapping launcher
-        padding-top: 0.1rem;
-        padding-right: calc(
-            44px - 2rem
-        ); // 2rem is the padding of the panel plus the right position of the panel relative to the launcher
     }
 
     .csui-control__title {
         display: flex;
         align-items: baseline;
         gap: 0.4rem;
+        flex: 1 1 auto;
         font-size: 0.95rem;
         font-weight: 700;
         color: var(--chatt-color-primary-dark);
@@ -261,14 +277,14 @@ html.csui-theme {
         white-space: nowrap;
     }
 
-    .csui-control__row {
-        margin: 0.25rem 0 0.75rem;
-    }
-
     .csui-control__diagnostics {
         display: grid;
         gap: 0.45rem;
         margin: -0.15rem 0 0.75rem;
+    }
+
+    .csui-control__diagnostics[hidden] {
+        display: none !important;
     }
 
     .csui-control__diagnostic {
@@ -302,20 +318,11 @@ html.csui-theme {
     // Toggle row (label + switch)
     // --------------------
     .csui-control__toggle {
-        display: flex;
+        display: inline-flex;
         align-items: center;
-        justify-content: space-between;
-        gap: 0.75rem;
-        width: 100%;
+        flex: 0 0 auto;
         cursor: pointer;
         user-select: none;
-        min-width: 0;
-    }
-
-    .csui-control__toggle-label {
-        font-size: 0.9rem;
-        font-weight: 600;
-        color: var(--chatt-color-text);
         min-width: 0;
     }
 
@@ -390,11 +397,9 @@ html.csui-theme {
         color: var(--chatt-color-primary-dark);
         text-decoration: none;
         font-size: 0.9rem;
-        font-weight: 600;
+        font-weight: 500;
 
-        transition:
-            background-color var(--chatt-transition-fast),
-            transform var(--chatt-transition-fast);
+        transition: background-color var(--chatt-transition-fast);
 
         svg {
             fill: currentColor;
@@ -403,7 +408,6 @@ html.csui-theme {
 
         &:hover {
             background-color: rgba(15, 76, 109, 0.08);
-            transform: translateX(1px);
         }
 
         &:focus-visible {

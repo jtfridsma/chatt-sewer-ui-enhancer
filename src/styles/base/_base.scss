@@ -1,4 +1,9 @@
 // Base styles for all SewerPayments Chattanooga theme
+html.csui-theme .material-symbols-rounded {
+    -webkit-user-select: none;
+    user-select: none;
+}
+
 html[data-csui-enabled].csui-theme {
     font-size: 16px;
 

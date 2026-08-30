@@ -4,55 +4,57 @@ export function renderHeader() {
     const logo = getPortalLogo();
     return `
         <header class="modern-header">
-            <div class="modern-header__identity">
-                ${logo ? renderHeaderLogo(logo) : ''}
-                <div class="modern-header__text">
-                    <p class="eyebrow">Chattanooga Sewer Payment Portal</p>
-                    <h1>Account Dashboard</h1>
+            <div class="modern-header__content">
+                <div class="modern-header__identity">
+                    ${logo ? renderHeaderLogo(logo) : ''}
+                    <div class="modern-header__text">
+                        <p class="eyebrow">Chattanooga Sewer Payment Portal</p>
+                        <h1>Dashboard</h1>
+                    </div>
                 </div>
+                <nav class="modern-header__actions" aria-label="Account actions">
+                    <details class="action-menu action-menu--account action-menu--desktop" data-action-menu>
+                        <summary>
+                            <span>Account</span>
+                            ${renderIcon('keyboard_arrow_down', 'action-menu__icon')}
+                        </summary>
+                        <div class="action-menu__panel">
+                            <button type="button" class="menu-button" data-action="profile">
+                                ${renderIcon('account_circle', 'button-icon')}
+                                <span>Update Profile</span>
+                            </button>
+                            <button type="button" class="menu-button" data-action="password">
+                                ${renderIcon('lock', 'button-icon')}
+                                <span>Change Password</span>
+                            </button>
+                        </div>
+                    </details>
+                    <button type="button" class="ghost-action action-menu--desktop" data-action="sign-out">
+                        ${renderIcon('logout', 'button-icon')}
+                        <span>Sign Out</span>
+                    </button>
+                    <details class="action-menu action-menu--mobile" data-action-menu>
+                        <summary aria-label="Open account menu" title="Account menu">
+                            ${renderIcon('menu', 'action-menu__icon')}
+                        </summary>
+                        <div class="action-menu__panel">
+                            <button type="button" class="menu-button" data-action="profile">
+                                ${renderIcon('account_circle', 'button-icon')}
+                                <span>Update Profile</span>
+                            </button>
+                            <button type="button" class="menu-button" data-action="password">
+                                ${renderIcon('lock', 'button-icon')}
+                                <span>Change Password</span>
+                            </button>
+                            <div class="menu-divider" role="separator"></div>
+                            <button type="button" class="menu-button" data-action="sign-out">
+                                ${renderIcon('logout', 'button-icon')}
+                                <span>Sign Out</span>
+                            </button>
+                        </div>
+                    </details>
+                </nav>
             </div>
-            <nav class="modern-header__actions" aria-label="Account actions">
-                <details class="action-menu action-menu--account action-menu--desktop" data-action-menu>
-                    <summary>
-                        <span>Account</span>
-                        ${renderIcon('keyboard_arrow_down', 'action-menu__icon')}
-                    </summary>
-                    <div class="action-menu__panel">
-                        <button type="button" class="menu-button" data-action="profile">
-                            ${renderIcon('account_circle', 'button-icon')}
-                            <span>Update Profile</span>
-                        </button>
-                        <button type="button" class="menu-button" data-action="password">
-                            ${renderIcon('lock', 'button-icon')}
-                            <span>Change Password</span>
-                        </button>
-                    </div>
-                </details>
-                <button type="button" class="ghost-action action-menu--desktop" data-action="sign-out">
-                    ${renderIcon('logout', 'button-icon')}
-                    <span>Sign Out</span>
-                </button>
-                <details class="action-menu action-menu--mobile" data-action-menu>
-                    <summary aria-label="Open account menu" title="Account menu">
-                        ${renderIcon('menu', 'action-menu__icon')}
-                    </summary>
-                    <div class="action-menu__panel">
-                        <button type="button" class="menu-button" data-action="profile">
-                            ${renderIcon('account_circle', 'button-icon')}
-                            <span>Update Profile</span>
-                        </button>
-                        <button type="button" class="menu-button" data-action="password">
-                            ${renderIcon('lock', 'button-icon')}
-                            <span>Change Password</span>
-                        </button>
-                        <div class="menu-divider" role="separator"></div>
-                        <button type="button" class="menu-button" data-action="sign-out">
-                            ${renderIcon('logout', 'button-icon')}
-                            <span>Sign Out</span>
-                        </button>
-                    </div>
-                </details>
-            </nav>
         </header>
     `;
 }

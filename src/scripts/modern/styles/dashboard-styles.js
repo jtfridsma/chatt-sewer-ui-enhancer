@@ -69,29 +69,48 @@ export const DASHBOARD_STYLES = `
             letter-spacing: 0;
             line-height: 1;
             text-transform: none;
+            user-select: none;
             white-space: nowrap;
             -webkit-font-feature-settings: "liga";
             -webkit-font-smoothing: antialiased;
+            -webkit-user-select: none;
         }
 
         .shell {
             display: grid;
             gap: 1rem;
-            width: min(1360px, calc(100vw - 2rem));
-            margin: 0 auto;
-            padding: 1rem 0 2rem;
+            width: 100%;
+            margin: 0;
+            padding: 0 0 2rem;
         }
 
         .modern-header {
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            border-bottom: 1px solid var(--dashboard-border);
+            background: var(--dashboard-surface);
+            box-shadow: 0 8px 24px rgba(9, 47, 73, 0.08);
+        }
+
+        .modern-header__content {
             display: flex;
             justify-content: space-between;
             align-items: center;
             gap: 1rem;
-            padding: 0.65rem 0.85rem;
-            border: 1px solid var(--dashboard-border);
-            border-radius: 8px;
-            background: var(--dashboard-surface);
-            box-shadow: 0 8px 24px rgba(9, 47, 73, 0.08);
+            width: min(1360px, calc(100vw - 2rem));
+            margin: 0 auto;
+            padding: 0.65rem 0;
+        }
+
+        .shell > .dashboard-layout,
+        .shell > .panel {
+            width: min(1360px, calc(100vw - 2rem));
+            margin: 0 auto;
+        }
+
+        .shell[aria-busy="true"] {
+            padding-top: 1rem;
         }
 
         .modern-header__identity {
@@ -123,6 +142,12 @@ export const DASHBOARD_STYLES = `
             flex: 0 0 auto;
             margin-left: auto;
             padding: 0.35rem 0;
+        }
+
+        @media (max-width: 87rem) {
+            .modern-header__actions {
+                padding-right: 3.5rem;
+            }
         }
 
         .action-menu--mobile {
@@ -1191,13 +1216,13 @@ export const DASHBOARD_STYLES = `
 
         @media (max-width: 720px) {
             .shell {
-                width: min(100%, calc(100vw - 1rem));
-                padding-top: 0.5rem;
+                padding-top: 0;
             }
 
-            .modern-header {
+            .modern-header__content {
                 gap: 0.65rem;
-                padding: 0.55rem 0.65rem;
+                width: min(100%, calc(100vw - 1rem));
+                padding: 0.55rem 0;
             }
 
             .modern-header__identity {
@@ -1207,7 +1232,7 @@ export const DASHBOARD_STYLES = `
             .modern-header__actions {
                 display: block;
                 width: auto;
-                padding: 0;
+                padding: 0 3.5rem 0 0;
             }
 
             .action-menu--desktop {

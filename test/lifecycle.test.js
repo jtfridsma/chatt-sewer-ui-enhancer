@@ -82,12 +82,14 @@ test('theme toggle shows diagnostics and extension version', () => {
         const badgeIcon = document.getElementById('csui-diagnostic-badge-icon');
 
         assert.match(root.textContent, /v1\.2\.3/);
+        assert.equal(diagnostics.style.display, 'none');
         window.__CSUI__.reportWarning('The legacy meter data was unavailable.');
 
         assert.equal(badge.getAttribute('data-visible'), 'true');
         assert.equal(badge.getAttribute('data-severity'), 'warning');
         assert.equal(badgeIcon.textContent, 'warning');
         assert.equal(diagnostics.hidden, false);
+        assert.equal(diagnostics.style.display, '');
         assert.match(diagnostics.textContent, /Warning/);
         assert.match(diagnostics.textContent, /legacy meter data was unavailable/);
 
