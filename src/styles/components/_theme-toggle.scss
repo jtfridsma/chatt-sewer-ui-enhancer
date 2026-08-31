@@ -73,10 +73,6 @@ html.csui-theme {
             background-color: var(--chatt-color-primary-dark);
         }
 
-        &:active {
-            background-color: var(--chatt-color-primary-dark);
-        }
-
         &:focus-visible {
             outline: 3px solid var(--chatt-color-accent);
             outline-offset: 3px;
@@ -242,10 +238,6 @@ html.csui-theme {
         opacity: 1;
         transform: translate(0, 0) scale(1);
         pointer-events: auto;
-    }
-
-    .csui-control[data-csui-open='true'] .csui-control__launcher {
-        background-color: var(--chatt-color-primary-dark);
     }
 
     // --------------------
