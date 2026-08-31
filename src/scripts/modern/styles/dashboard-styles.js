@@ -144,9 +144,11 @@ export const DASHBOARD_STYLES = `
             padding: 0.35rem 0;
         }
 
-        @media (max-width: 87rem) {
+        @media (min-width: 721px) {
             .modern-header__actions {
-                padding-right: 3.5rem;
+                /* Keep a 12px gap from the fixed 40px control while the centered
+                   1360px header can still reach it; release space smoothly once it cannot. */
+                padding-right: clamp(0px, calc(748px - 50vw), 52px);
             }
         }
 
@@ -1232,7 +1234,8 @@ export const DASHBOARD_STYLES = `
             .modern-header__actions {
                 display: block;
                 width: auto;
-                padding: 0 3.5rem 0 0;
+                /* The header is inset 8px farther than the fixed control on mobile. */
+                padding: 0 3.75rem 0 0;
             }
 
             .action-menu--desktop {

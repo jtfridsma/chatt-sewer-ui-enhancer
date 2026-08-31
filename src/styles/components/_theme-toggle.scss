@@ -50,10 +50,10 @@ html.csui-theme {
     // Keep the launcher aligned to the dashboard header in either theme state.
     // This matches the dashboard's desktop/mobile navigation breakpoint.
     &.csui-webshare.csui-webshare-dashboard .csui-control {
-        top: 1.65rem;
+        top: calc(1.65rem + 2px);
 
         @media (max-width: 720px) {
-            top: 0.875rem;
+            top: 1rem;
         }
     }
 
