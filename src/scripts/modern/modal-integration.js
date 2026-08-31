@@ -70,7 +70,7 @@ export function setupModernModalIntegration() {
                 modal
                     .querySelectorAll("[data-csui-generated='payment-actions']")
                     .forEach((actions) => {
-                        actions.before(...actions.childNodes);
+                        actions.before(...actions.querySelectorAll('.btn'));
                         actions.remove();
                     });
                 modal.querySelectorAll('[data-csui-payment-form]').forEach((table) => {
@@ -148,7 +148,7 @@ function enhancePaymentModal(modal) {
         ['forgetToken()', 'Forget stored method'],
     ];
     labels.forEach(([action, label]) => {
-        const button = actions?.querySelector(`:scope > .btn[ng-click='${action}']`);
+        const button = actions?.querySelector(`.btn[ng-click='${action}']`);
         if (button) setAttributeIfChanged(button, 'data-csui-payment-label', label);
     });
 
@@ -334,18 +334,41 @@ function reorderPaymentActions(actionContainer) {
 
     const actionOrder = ['payToken()', 'cancel()', 'payNonToken()', 'forgetToken()'];
     const orderedActions = actionOrder
-        .map((action) => actionContainer.querySelector(`:scope > .btn[ng-click='${action}']`))
+        .map((action) => actionContainer.querySelector(`.btn[ng-click='${action}']`))
         .filter(Boolean);
-    const currentOrder = Array.from(actionContainer.querySelectorAll(':scope > .btn'));
+    if (!orderedActions.length) return;
 
-    if (
-        orderedActions.length === currentOrder.length &&
-        orderedActions.every((action, index) => action === currentOrder[index])
-    ) {
-        return;
-    }
+    const primary = ensurePaymentActionRow(actionContainer, 'primary');
+    const secondary = ensurePaymentActionRow(actionContainer, 'secondary');
+    const knownActions = new Set(orderedActions);
+    const additionalActions = Array.from(actionContainer.querySelectorAll('.btn')).filter(
+        (action) => !knownActions.has(action)
+    );
 
-    orderedActions.forEach((action) => actionContainer.append(action));
+    syncPaymentActionRow(primary, orderedActions.slice(0, 2));
+    syncPaymentActionRow(secondary, [...orderedActions.slice(2), ...additionalActions]);
+}
+
+function syncPaymentActionRow(row, actions) {
+    const currentActions = Array.from(row.querySelectorAll(':scope > .btn'));
+    const isCurrentOrder =
+        currentActions.length === actions.length &&
+        actions.every((action, index) => currentActions[index] === action);
+    if (isCurrentOrder) return;
+
+    row.replaceChildren(...actions);
+}
+
+function ensurePaymentActionRow(actionContainer, name) {
+    const selector = `:scope > [data-csui-generated='payment-action-row-${name}']`;
+    let row = actionContainer.querySelector(selector);
+    if (row) return row;
+
+    row = document.createElement('div');
+    row.className = `csui-payment-actions__row csui-payment-actions__row--${name}`;
+    row.setAttribute('data-csui-generated', `payment-action-row-${name}`);
+    actionContainer.append(row);
+    return row;
 }
 
 function getModalKind(title) {

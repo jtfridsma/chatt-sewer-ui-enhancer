@@ -517,7 +517,7 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
 
         .modal-footer {
             display: flex;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
             align-items: center;
             padding: 0.95rem 1.15rem;
             column-gap: 0.65rem;
@@ -528,9 +528,10 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
         .modal-footer > .csui-payment-totals {
             display: grid;
             align-self: flex-start;
-            flex: 1 1 auto;
+            flex: 1 1 0;
             gap: 0.55rem;
             margin: 0 0.75rem 0 0;
+            min-width: 0;
         }
 
         .modal-footer > .csui-payment-totals > p {
@@ -586,53 +587,39 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
 
         .modal-footer > .csui-payment-actions {
             display: flex;
+            flex-direction: column;
+            align-items: flex-end;
             flex: 0 0 auto;
+            width: max-content;
+            max-width: 100%;
+            gap: 0.2rem;
+        }
+
+        .modal-footer > .csui-payment-actions > .csui-payment-actions__row {
+            display: flex;
             flex-wrap: wrap;
             justify-content: flex-end;
-            column-gap: 0.65rem;
-            row-gap: 0.2rem;
+            width: 100%;
+            gap: 0.65rem;
         }
 
-        .modal-footer > .csui-payment-actions::after {
-            flex: 0 0 100%;
-            order: 3;
-            height: 0;
-            content: '';
-        }
-
-        .modal-footer > .csui-payment-actions > .btn[ng-click='payToken()'] {
-            order: 1;
-        }
-
-        .modal-footer > .csui-payment-actions > .btn[ng-click='cancel()'] {
-            order: 2;
-        }
-
-        .modal-footer > .csui-payment-actions > .btn[ng-click='payNonToken()'] {
-            order: 4;
-        }
-
-        .modal-footer > .csui-payment-actions > .btn[ng-click='forgetToken()'] {
-            order: 5;
-        }
-
-        .modal-footer > .csui-payment-actions > .btn[data-csui-payment-label] {
+        .modal-footer > .csui-payment-actions .btn[data-csui-payment-label] {
             font-size: 0;
         }
 
-        .modal-footer > .csui-payment-actions > .btn[data-csui-payment-label]::after {
+        .modal-footer > .csui-payment-actions .btn[data-csui-payment-label]::after {
             content: attr(data-csui-payment-label);
             font-size: 0.78rem;
         }
 
         .modal-footer
             > .csui-payment-actions
-            > .btn[ng-click='payToken()'][data-csui-payment-label]::after {
+            .btn[ng-click='payToken()'][data-csui-payment-label]::after {
             font-size: 0.9rem;
         }
 
-        .modal-footer > .csui-payment-actions > .btn[ng-click='payNonToken()'],
-        .modal-footer > .csui-payment-actions > .btn[ng-click='forgetToken()'] {
+        .modal-footer > .csui-payment-actions .btn[ng-click='payNonToken()'],
+        .modal-footer > .csui-payment-actions .btn[ng-click='forgetToken()'] {
             min-height: 2rem;
             height: auto !important;
             padding: 0.22rem 0.35rem;
@@ -642,8 +629,8 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
             font-weight: 500;
         }
 
-        .modal-footer > .csui-payment-actions > .btn[ng-click='payNonToken()']::before,
-        .modal-footer > .csui-payment-actions > .btn[ng-click='forgetToken()']::before {
+        .modal-footer > .csui-payment-actions .btn[ng-click='payNonToken()']::before,
+        .modal-footer > .csui-payment-actions .btn[ng-click='forgetToken()']::before {
             margin-right: 0.28rem;
             font-family: 'Material Symbols Rounded';
             font-feature-settings: 'liga';
@@ -658,18 +645,18 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
             -webkit-font-smoothing: antialiased;
         }
 
-        .modal-footer > .csui-payment-actions > .btn[ng-click='payNonToken()']::before {
+        .modal-footer > .csui-payment-actions .btn[ng-click='payNonToken()']::before {
             content: 'payments';
         }
 
-        .modal-footer > .csui-payment-actions > .btn[ng-click='forgetToken()']::before {
+        .modal-footer > .csui-payment-actions .btn[ng-click='forgetToken()']::before {
             content: 'block';
         }
 
-        .modal-footer > .csui-payment-actions > .btn[ng-click='payNonToken()']:hover,
-        .modal-footer > .csui-payment-actions > .btn[ng-click='payNonToken()']:focus,
-        .modal-footer > .csui-payment-actions > .btn[ng-click='forgetToken()']:hover,
-        .modal-footer > .csui-payment-actions > .btn[ng-click='forgetToken()']:focus {
+        .modal-footer > .csui-payment-actions .btn[ng-click='payNonToken()']:hover,
+        .modal-footer > .csui-payment-actions .btn[ng-click='payNonToken()']:focus,
+        .modal-footer > .csui-payment-actions .btn[ng-click='forgetToken()']:hover,
+        .modal-footer > .csui-payment-actions .btn[ng-click='forgetToken()']:focus {
             border-color: transparent;
             background: transparent;
             text-decoration: underline;
@@ -726,11 +713,17 @@ html[data-csui-enabled].csui-theme.csui-webshare.csui-webshare-dashboard.csui-mo
         }
 
         .modal[data-csui-modal-kind='payment'] .modal-footer {
+            flex-direction: column;
+            align-items: stretch;
             row-gap: 0.45rem;
 
             > .csui-payment-totals {
-                flex-basis: 100%;
+                align-self: stretch;
                 margin-right: 0;
+            }
+
+            > .csui-payment-actions {
+                align-self: flex-end;
             }
 
             .btn {

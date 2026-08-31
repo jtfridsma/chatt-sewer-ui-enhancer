@@ -567,9 +567,9 @@ function renderAccountSummaryTab({ account, waterMeters, flags, loading, selecte
         ['Name', account.name],
         ['Service Address', account.serviceAddress],
         ['Account Number', account.accountNumber],
-        ['Last Statement Balance', formatOptionalCurrency(account.lastStatementBalance)],
         ['Last Payment', formatOptionalCurrency(account.lastPaymentAmount)],
         ['Last Payment Date', formatDate(account.lastPaymentDate)],
+        ['Last Statement Balance', formatOptionalCurrency(account.lastStatementBalance)],
         ['Current Balance', formatCurrency(account.currentBalance)],
     ];
 

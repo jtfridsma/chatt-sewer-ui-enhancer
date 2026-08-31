@@ -144,6 +144,29 @@ export function reconcileMeterSeries(
     });
 }
 
+export function excludeForeignMeterSeries(meters, selectedAccountKey, metersByAccount) {
+    if (!Array.isArray(meters) || !selectedAccountKey || !(metersByAccount instanceof Map)) {
+        return Array.isArray(meters) ? meters : [];
+    }
+
+    const getMeterKey = (meter) => normalizeMeterNumber(meter?.meterNumber);
+    const selectedMeterKeys = new Set(
+        (metersByAccount.get(selectedAccountKey) || []).map(getMeterKey).filter(Boolean)
+    );
+    const foreignMeterKeys = new Set();
+
+    metersByAccount.forEach((accountMeters, accountKey) => {
+        if (accountKey === selectedAccountKey) return;
+        (Array.isArray(accountMeters) ? accountMeters : []).forEach((meter) => {
+            const meterKey = getMeterKey(meter);
+            if (meterKey && !selectedMeterKeys.has(meterKey)) foreignMeterKeys.add(meterKey);
+        });
+    });
+
+    if (!foreignMeterKeys.size) return meters;
+    return meters.filter((meter) => !foreignMeterKeys.has(getMeterKey(meter)));
+}
+
 function indexByKey(collection, getKey) {
     return new Map(
         (Array.isArray(collection) ? collection : [])

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+    excludeForeignMeterSeries,
     getAccountStatus,
     normalizeAccount,
     normalizeMeterSeries,
@@ -140,6 +141,42 @@ test('does not add fallback-only meters to the current Angular meter collection'
         ['current']
     );
     assert.equal(reconciled[0].readings.length, 2);
+});
+
+test('removes meters already attributed exclusively to another account', () => {
+    const metersByAccount = new Map([
+        ['004073777-01', [{ meterNumber: '28151448' }, { meterNumber: '14528592' }]],
+        ['004052042-01', [{ meterNumber: '27025799' }, { meterNumber: '4985526T' }]],
+    ]);
+    const contaminated = [
+        { meterNumber: '28151448' },
+        { meterNumber: '14528592' },
+        { meterNumber: '27025799' },
+        { meterNumber: '4985526T' },
+    ];
+
+    assert.deepEqual(
+        excludeForeignMeterSeries(contaminated, '004073777-01', metersByAccount).map(
+            (meter) => meter.meterNumber
+        ),
+        ['28151448', '14528592']
+    );
+});
+
+test('keeps a meter when both accounts are known to use it', () => {
+    const metersByAccount = new Map([
+        ['current', [{ meterNumber: 'shared' }]],
+        ['other', [{ meterNumber: 'shared' }, { meterNumber: 'foreign' }]],
+    ]);
+
+    assert.deepEqual(
+        excludeForeignMeterSeries(
+            [{ meterNumber: 'shared' }, { meterNumber: 'foreign' }],
+            'current',
+            metersByAccount
+        ).map((meter) => meter.meterNumber),
+        ['shared']
+    );
 });
 
 test('reconciles meter labels that differ only by the legacy display prefix', () => {

@@ -3,6 +3,7 @@
 
 import { MODERN_BRIDGE_EVENTS as EVENTS } from './events.js';
 import {
+    excludeForeignMeterSeries,
     normalizeAccount,
     normalizeMeterSeries,
     reconcileMeterSeries,
@@ -62,6 +63,7 @@ function installBridge() {
         followUpTimeoutIds.clear();
         fallbackData.scheduled.forEach((id) => window.clearTimeout(id));
         fallbackData.scheduled.clear();
+        fallbackData.angularWaterMetersByAccount.clear();
     }
 
     function requestState() {
@@ -307,6 +309,7 @@ function createFallbackDataStore() {
         statementsByAccount: new Map(),
         waterMetersByAccount: new Map(),
         waterMeterCountsByAccount: new Map(),
+        angularWaterMetersByAccount: new Map(),
         pending: new Set(),
         scheduled: new Map(),
         availableFromAngular: new Set(),
@@ -546,7 +549,17 @@ function buildDashboardState(scope, fallbackData) {
         ? reconciledStatements
         : normalizeStatementLinks();
 
-    const scopeWaterMeters = normalizeMeterSeries(scope.waterMeterData);
+    const rawScopeWaterMeters = normalizeMeterSeries(scope.waterMeterData);
+    const accountScopedWaterMeters = excludeForeignMeterSeries(
+        rawScopeWaterMeters,
+        selectedRawKey,
+        fallbackData?.angularWaterMetersByAccount
+    );
+    const scopeWaterMeters = limitCurrentAccountMeters(
+        accountScopedWaterMeters,
+        scope.maxNumberOfMeters
+    );
+    rememberAngularWaterMeters(fallbackData, selectedRawKey, scopeWaterMeters);
     const hasFallbackWaterMeters =
         !!selectedRawKey && fallbackData?.waterMetersByAccount?.has(selectedRawKey);
     const fallbackWaterMeters = normalizeMeterSeries(
@@ -797,6 +810,21 @@ function getStatementDateSource(item) {
 
 function isStatementUrl(value) {
     return /StatementView\.aspx|StmtKey=/i.test(stringValue(value));
+}
+
+function limitCurrentAccountMeters(meters, maxMeters) {
+    if (!Array.isArray(meters)) return [];
+    // Apply the same selected-account ceiling the fallback service uses. This
+    // prevents an Angular collection retained from another account from
+    // bypassing the portal's own display limit.
+    const limit = Number(maxMeters);
+    if (!Number.isFinite(limit) || limit <= 0 || meters.length <= limit) return meters;
+    return meters.slice(0, limit);
+}
+
+function rememberAngularWaterMeters(store, accountKey, meters) {
+    if (!store?.angularWaterMetersByAccount || !accountKey || !meters.length) return;
+    store.angularWaterMetersByAccount.set(accountKey, meters);
 }
 
 function getExpectedMeterCount(rawMeters, maxMeters) {
