@@ -64,7 +64,19 @@ test('page chrome restores the host title and preserves host favicons', () => {
         applyPageChrome({ isSewerPaymentsChatt: true });
 
         assert.equal(globalThis.document.title, 'Chattanooga Sewer Payment Portal');
-        assert.equal(head.children.length, 4);
+        assert.equal(head.children.length, 8);
+        assert.deepEqual(
+            head.children.slice(1).map((link) => link.href),
+            [
+                'public/favicons/favicon-16.png',
+                'public/favicons/favicon-32.png',
+                'public/favicons/favicon-48.png',
+                'public/favicons/favicon-180.png',
+                'public/favicons/favicon-192.png',
+                'public/favicons/favicon-512.png',
+                'public/favicons/favicon-32.png',
+            ]
+        );
 
         restorePageChrome();
 

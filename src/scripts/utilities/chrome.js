@@ -4,7 +4,35 @@
 
 const BASE_TITLE = 'Chattanooga Sewer Payment Portal';
 const OWNED_FAVICON_ATTR = 'data-csui-owned-favicon';
-const FAVICON_IDS = ['csui-favicon-16', 'csui-favicon-32', 'csui-favicon-shortcut'];
+const FAVICON_LINKS = [
+    { id: 'csui-favicon-16', rel: 'icon', path: 'public/favicons/favicon-16.png', sizes: '16x16' },
+    { id: 'csui-favicon-32', rel: 'icon', path: 'public/favicons/favicon-32.png', sizes: '32x32' },
+    { id: 'csui-favicon-48', rel: 'icon', path: 'public/favicons/favicon-48.png', sizes: '48x48' },
+    {
+        id: 'csui-favicon-180',
+        rel: 'apple-touch-icon',
+        path: 'public/favicons/favicon-180.png',
+        sizes: '180x180',
+    },
+    {
+        id: 'csui-favicon-192',
+        rel: 'icon',
+        path: 'public/favicons/favicon-192.png',
+        sizes: '192x192',
+    },
+    {
+        id: 'csui-favicon-512',
+        rel: 'icon',
+        path: 'public/favicons/favicon-512.png',
+        sizes: '512x512',
+    },
+    {
+        id: 'csui-favicon-shortcut',
+        rel: 'shortcut icon',
+        path: 'public/favicons/favicon-32.png',
+    },
+];
+const FAVICON_IDS = FAVICON_LINKS.map(({ id }) => id);
 
 let baseFaviconApplied = false;
 let originalDocumentTitle;
@@ -131,13 +159,9 @@ function applyBaseFaviconOnce() {
     if (baseFaviconApplied) return;
     baseFaviconApplied = true;
 
-    const href16 = getExtensionUrl('public/icons/icon-16.png');
-    const href32 = getExtensionUrl('public/icons/icon-32.png');
-
-    // Most browsers will pick the best match; ordering helps (last wins in some cases).
-    upsertFaviconLink({ id: 'csui-favicon-16', rel: 'icon', href: href16, sizes: '16x16' });
-    upsertFaviconLink({ id: 'csui-favicon-32', rel: 'icon', href: href32, sizes: '32x32' });
-    upsertFaviconLink({ id: 'csui-favicon-shortcut', rel: 'shortcut icon', href: href32 });
+    FAVICON_LINKS.forEach(({ path, ...link }) => {
+        upsertFaviconLink({ ...link, href: getExtensionUrl(path) });
+    });
 }
 
 function getWebShareTitleSuffix(ctx) {

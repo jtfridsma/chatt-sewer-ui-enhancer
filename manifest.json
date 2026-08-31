@@ -29,7 +29,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["public/icons/*.png"],
+      "resources": ["public/icons/*.png", "public/favicons/*.png"],
       "matches": ["https://www.sewerpayments.com/*", "https://share.dwcorp.com/*"]
     },
     {
