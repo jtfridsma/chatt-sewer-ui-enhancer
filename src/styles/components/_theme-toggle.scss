@@ -1,6 +1,28 @@
 // Floating CSUI control: circular launcher + popover panel.
 // Requires markup injected by src/scripts/components/theme-toggle.js.
 
+@keyframes csui-launcher-glyph-enable {
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    50% {
+        transform: rotate(-15deg);
+    }
+}
+
+@keyframes csui-launcher-glyph-disable {
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    50% {
+        transform: rotate(-15deg);
+    }
+}
+
 html.csui-theme {
     .csui-control,
     .csui-control * {
@@ -11,8 +33,8 @@ html.csui-theme {
         position: fixed;
         top: 1rem;
         right: 1rem;
-        width: 44px;
-        height: 44px;
+        width: 40px;
+        height: 40px;
         z-index: 1000;
         pointer-events: auto;
         user-select: none;
@@ -45,16 +67,15 @@ html.csui-theme {
         padding: 0;
         margin: 0;
 
-        width: 44px;
-        height: 44px;
+        width: 40px;
+        height: 40px;
         border-radius: 999px;
 
         display: inline-flex;
         align-items: center;
         justify-content: center;
 
-        background-color: var(--chatt-color-primary);
-        color: #ffffff;
+        background: transparent;
 
         cursor: pointer;
 
@@ -63,66 +84,49 @@ html.csui-theme {
         right: 0;
         z-index: 3; // stays above panel
 
-        transition: background-color var(--chatt-transition-fast);
-
         background-image: none;
         text-decoration: none;
         line-height: 1;
-
-        &:hover {
-            background-color: var(--chatt-color-primary-dark);
-        }
 
         &:focus-visible {
             outline: 3px solid var(--chatt-color-accent);
             outline-offset: 3px;
         }
-
-        // --- Toilet handle indicator (CSS-only) ---
-        // A tiny “knob” + “arm” that flips down when disabled.
-        // Knob
-        &::before {
-            content: '';
-            position: absolute;
-            width: 12px;
-            height: 12px;
-            border-radius: 999px;
-            background: white;
-            // place slightly left so icon/handle reads well
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-        }
-
-        // Arm
-        &::after {
-            content: '';
-            position: absolute;
-            width: 14px;
-            height: 2px;
-            border-radius: 2px;
-            background: white;
-
-            // anchored near knob
-            right: 17px;
-            top: calc(50% - 1px);
-
-            transform-origin: center right;
-            transform: rotate(0deg); // enabled = handle up
-            transition: transform var(--chatt-transition-fast);
-        }
     }
 
-    // Handle down when disabled (no data-csui-enabled)
-    // NOTE: this file is nested under `html.csui-theme { ... }`, so use `&` (or @at-root)
-    // to avoid generating an impossible selector like `html.csui-theme html.csui-theme:not(...) ...`.
-    &:not([data-csui-enabled]) .csui-control__launcher::after {
-        transform: rotate(-30deg);
+    .csui-control__launcher-icon {
+        display: block;
+        width: 40px;
+        height: 40px;
+        flex: none;
     }
 
-    // Visually distinguish the disabled state.
-    &:not([data-csui-enabled]) .csui-control__launcher {
-        background-color: var(--chatt-color-text-muted);
+    .csui-control__launcher-icon-background {
+        fill: #004360;
+        transition: fill var(--chatt-transition-fast);
+    }
+
+    .csui-control__launcher-icon-glyph {
+        fill: #ffffff;
+        transition: fill var(--chatt-transition-fast);
+        transform-box: fill-box;
+        transform-origin: 76% 50%;
+    }
+
+    &[data-csui-enabled] .csui-control__launcher-icon-glyph {
+        animation: csui-launcher-glyph-enable 260ms ease-in-out;
+    }
+
+    &:not([data-csui-enabled]) .csui-control__launcher-icon-glyph {
+        animation: csui-launcher-glyph-disable 260ms ease-in-out;
+    }
+
+    &:not([data-csui-enabled]) .csui-control__launcher-icon-background {
+        fill: var(--chatt-color-text-muted);
+    }
+
+    &:not([data-csui-enabled]) .csui-control__launcher-icon-glyph {
+        fill: var(--chatt-color-surface);
     }
 
     // --------------------

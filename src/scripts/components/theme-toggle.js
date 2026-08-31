@@ -144,6 +144,10 @@ function getMarkup() {
       aria-haspopup="dialog"
       aria-expanded="false"
     >
+      <svg class="csui-control__launcher-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+        <path class="csui-control__launcher-icon-background" d="M0 24c0 13.255 10.745 24 24 24s24-10.745 24-24S37.255 0 24 0 0 10.745 0 24"/>
+        <path class="csui-control__launcher-icon-glyph" d="M32 16a7.98 7.98 0 0 0-6.398 3.2c-.626.834-1.542 1.467-2.584 1.467H9.333a2.667 2.667 0 0 0-2.666 2.666v1.334a2.667 2.667 0 0 0 2.666 2.666h13.685c1.042 0 1.958.633 2.584 1.467A8 8 0 1 0 32 16"/>
+      </svg>
       <span id="${ERROR_BADGE_ID}" class="csui-control__badge" aria-hidden="true">
         <span id="${BADGE_ICON_ID}" class="material-symbols-rounded csui-control__badge-icon">warning</span>
       </span>
