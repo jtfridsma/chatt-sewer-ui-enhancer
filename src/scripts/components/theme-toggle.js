@@ -20,7 +20,7 @@ const DIAGNOSTICS_ID = 'csui-diagnostics';
 const MAX_DIAGNOSTICS = 3;
 
 const LINKS = {
-    reportIssue: 'https://github.com/jtfridsma/chatt-sewer-ui/issues',
+    reportIssue: 'https://github.com/jtfridsma/chatt-sewer-ui/issues/new',
     buyCoffee: 'https://buymeacoffee.com/jtfridsma',
 };
 
