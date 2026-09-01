@@ -91,7 +91,7 @@ export function renderDashboardHelper() {
         <aside class="dashboard-helper" aria-label="Dashboard help and service contacts">
             <p>
                 Trouble with this enhanced dashboard? Try disabling the plugin, or
-                <a href="https://github.com/jtfridsma/chatt-sewer-ui-enhancer/issues/new" target="_blank" rel="noopener noreferrer">report an issue</a>.
+                <a href="https://github.com/jtfridsma/chatt-sewer-ui/issues/new" target="_blank" rel="noopener noreferrer">report an issue</a>.
             </p>
             <p>
                 For sewer service or payment issues, contact 311 at

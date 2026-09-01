@@ -1,4 +1,4 @@
-# Chattanooga Sewer UI Enhancer
+# Chatt Sewer UI
 
 A focused Chrome extension that transforms Chattanooga's legacy sewer payment portals into a clearer, more accessible experience—with a modern account dashboard, streamlined payment workflows, and enhancements that can be disabled at any time.
 
@@ -92,7 +92,7 @@ Build toolchain:
 Run `npm run package` to create a distributable extension archive. The command runs formatting and
 tests through the production build, clears `dist/`, verifies that `manifest.json` and `package.json`
 versions match, validates every manifest resource, copies only the manifest and referenced runtime
-files into a clean staging directory, and writes `dist/chatt-sewer-ui-enhancer-v<VERSION>.zip`.
+files into a clean staging directory, and writes `dist/chatt-sewer-ui-v<VERSION>.zip`.
 
 The ZIP contains `manifest.json` at its root and can be submitted or shared without the source tree,
 development dependencies, or stale unreferenced build output.
